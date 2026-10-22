@@ -1,0 +1,944 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Capstone Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F6F5F2;--panel:#FFFFFF;--col:#EDECE7;--text:#1B1B1F;--muted:#5A5A63;--line:#E3E1DB;--line-strong:#CBC8C0;
+  --accent:#B34700;--accent-ink:#FFFFFF;--accent-soft:#FBEADB;--purple:#6D4FC2;--red:#9F1D1D;--red-soft:#F6E3E1;
+  --keep:#EEF5EC;--keep-ink:#2F5A2A;--t-task:#EEEEEC;--t-spike:#EDE9FE;--t-ms:#FFE8D1;--t-story:#E8EDF2;--t-bug:#F6E3E1;
+  --c-committed:#CBC8C0;--c-story:#3A3A42;--c-task:#A3A19A;
+  --sans:"IBM Plex Sans","Segoe UI",Helvetica,Arial,sans-serif;--mono:"IBM Plex Mono",Consolas,"Courier New",monospace;
+  --r-sm:8px;--r:10px;--r-lg:12px;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#151517;--panel:#1E1E22;--col:#26262B;--text:#ECEBE6;--muted:#A6A6B0;--line:#303036;--line-strong:#45454D;
+  --accent:#E3803F;--accent-ink:#1B1B1F;--accent-soft:#3A2618;--purple:#A994F2;--red:#E57A7A;--red-soft:#3A2020;
+  --keep:#1E2A1D;--keep-ink:#A9D3A0;--t-task:#2C2C31;--t-spike:#2D2647;--t-ms:#3B2A1B;--t-story:#242A32;--t-bug:#3A2020;
+  --c-committed:#47474F;--c-story:#CFCFD6;--c-task:#7D7C77;
+}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:400 15px/1.5 var(--sans)}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{margin:0;font-weight:600}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}.small{font-size:13px}.xs{font-size:12px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* buttons & controls — 44px minimum targets */
+.btn{min-height:44px;padding:0 16px;border-radius:var(--r-sm);border:1px solid var(--line-strong);background:var(--panel);cursor:pointer;font-size:14px;font-weight:500;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--text)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(.94)}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.ghost:hover{background:var(--col)}
+.btn.danger{color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,transparent)}
+.btn.danger-solid{background:var(--red);border-color:var(--red);color:#fff}
+.icon{min-width:44px;min-height:44px;border:0;background:transparent;border-radius:var(--r-sm);cursor:pointer;color:var(--muted);font-size:18px;line-height:1;display:inline-grid;place-items:center}
+.icon:hover{background:var(--col);color:var(--text)}
+input,select,textarea{border:1px solid var(--line-strong);background:var(--panel);border-radius:var(--r-sm);padding:0 12px;min-height:44px;width:100%}
+textarea{padding:10px 12px;resize:vertical;line-height:1.5}
+input[type=date]{font-family:var(--mono);font-size:14px}
+input[type=checkbox]{width:20px;height:20px;min-height:0;accent-color:var(--accent)}
+input[type=color]{padding:4px;width:52px}
+
+/* top bar */
+.topbar{display:flex;align-items:center;gap:16px;padding:0 24px;background:var(--panel);border-bottom:1px solid var(--line);min-height:64px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:36px;height:36px;border-radius:var(--r-sm);background:var(--text);color:var(--bg);display:grid;place-items:center;font:600 14px var(--mono);letter-spacing:.02em}
+.pname{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.tabs{display:flex;gap:2px;overflow-x:auto;flex:1;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{min-height:64px;padding:0 14px;border:0;background:none;cursor:pointer;color:var(--muted);font-size:14px;font-weight:500;border-bottom:2px solid transparent;white-space:nowrap}
+.tab:hover{color:var(--text)}
+.tab[aria-selected=true]{color:var(--text);border-bottom-color:var(--text);font-weight:600}
+.tb-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.sync{font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 10px;border-radius:var(--r-sm);border:0;background:none;cursor:default;white-space:nowrap}
+.sync.act{cursor:pointer}.sync.act:hover{background:var(--col)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--line-strong);flex:none}
+.dot.on{background:var(--keep-ink)}.dot.warn{background:var(--accent)}
+.acct{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--col);font:600 12px var(--mono)}
+@media (max-width:860px){.topbar{padding:8px 16px 0;gap:8px}.tabs{order:3;flex-basis:100%}.tab{min-height:48px}.pname{max-width:140px}.sync .lbl{display:none}}
+
+/* banners */
+.banner{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 24px;border-bottom:1px solid var(--line);font-size:14px}
+.banner.view{background:var(--col)}
+.banner.info{background:var(--accent-soft)}
+.banner b{font-weight:600}
+@media (max-width:860px){.banner{padding:12px 16px}}
+
+/* sprint header */
+.sprinthead{display:flex;flex-wrap:wrap;gap:24px;justify-content:space-between;align-items:flex-end;padding:32px 24px 24px}
+.sh-left{flex:1 1 380px;min-width:0}
+.sh-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin-bottom:8px}
+.sh-meta select{width:auto;min-width:150px;text-transform:none;letter-spacing:0;font-size:14px;font-weight:500}
+.goal{font-size:26px;font-weight:600;line-height:1.25;letter-spacing:-.01em;border:1px solid transparent;background:transparent;padding:4px 8px;margin-left:-9px;border-radius:var(--r-sm);width:100%;min-height:48px}
+textarea.goal{resize:none;overflow:hidden;display:block}
+.goal:hover{border-color:var(--line)}
+.goal:focus{border-color:var(--line-strong);background:var(--panel)}
+.goal-ro{font-size:26px;font-weight:600;line-height:1.25;padding:4px 0}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(104px,1fr));gap:12px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;min-width:0}
+.tile .tl{font-size:12px;color:var(--muted)}
+.tile .tv{font:500 24px/1.2 var(--mono);margin-top:4px}
+.tile .tv small{font-size:13px;color:var(--muted);font-weight:400}
+.tile.alert .tv{color:var(--red)}
+@media (max-width:860px){.sprinthead{padding:24px 16px 16px;gap:16px}.tiles{grid-template-columns:repeat(2,1fr);width:100%}}
+
+/* filters */
+.filters{display:flex;flex-wrap:wrap;gap:8px;padding:0 24px 16px;align-items:center}
+.filters input{max-width:260px}.filters select{width:auto;min-width:140px}
+@media (max-width:860px){.filters{padding:0 16px 16px}.filters input{max-width:none;flex:1 1 100%}.filters select{flex:1 1 140px}}
+
+/* workspace */
+.workspace{padding:0 24px 64px;display:grid;gap:24px;align-items:start}
+.workspace.with-detail{grid-template-columns:minmax(0,1fr) 380px}
+#main{min-width:0}
+@media (max-width:1100px){.workspace.with-detail{grid-template-columns:1fr}}
+@media (max-width:860px){.workspace{padding:0 16px 48px}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px;min-width:0}
+.sec-t{font-size:18px;font-weight:600;margin:0 0 4px}
+.sec-sub{font-size:13px;color:var(--muted);margin:0 0 16px}
+.stack{display:grid;gap:24px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:960px){.grid2,.grid3{grid-template-columns:1fr}}
+.empty{color:var(--muted);font-size:13px;padding:8px 0}
+
+/* pills */
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;line-height:1;padding:5px 9px;border-radius:999px;white-space:nowrap;background:var(--t-task);color:var(--muted)}
+.p-blocked{background:var(--red-soft);color:var(--red)}
+.p-overdue{background:transparent;color:var(--red);box-shadow:inset 0 0 0 1px var(--red)}
+.p-soon{background:var(--accent-soft);color:var(--accent)}
+.p-ms{background:var(--t-ms);color:var(--accent)}
+.st-backlog{background:transparent;color:var(--muted);box-shadow:inset 0 0 0 1px var(--line-strong)}
+.st-todo{background:var(--col);color:var(--text)}
+.st-inprogress{background:var(--text);color:var(--bg)}
+.st-review{background:var(--muted);color:var(--panel)}
+.st-done{background:var(--keep);color:var(--keep-ink)}
+.key{font:500 12px var(--mono);color:var(--muted);white-space:nowrap}
+.av{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;color:#fff;font:600 11px var(--mono);flex:none}
+.av.none{background:var(--col);color:var(--muted)}
+.pts{font:500 12px var(--mono);color:var(--muted);white-space:nowrap}
+.date{font:400 12px var(--mono);color:var(--muted);white-space:nowrap}
+.date.over{color:var(--red)}
+
+/* kanban */
+.board{display:grid;grid-template-columns:repeat(5,minmax(248px,1fr));gap:12px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x proximity}
+.col{background:var(--col);border-radius:var(--r-lg);padding:8px;min-height:420px;border:2px dashed transparent;scroll-snap-align:start}
+.col.over{border-color:var(--accent)}
+.colh{display:flex;align-items:center;gap:8px;padding:2px 4px 6px 8px;min-height:44px}
+.colh .cn{font-size:14px;font-weight:600;white-space:nowrap}
+.colh .cc{white-space:nowrap}
+.colh .cc{font:500 12px var(--mono);color:var(--muted)}
+.colh .sp{flex:1}
+.kcard{display:block;width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px;margin-bottom:8px;cursor:pointer}
+.kcard:hover{border-color:var(--line-strong)}
+.kcard.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.kcard.is-blocked{border-left:3px solid var(--red)}
+.krow{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ktitle{font-size:14px;font-weight:500;margin:8px 0 10px;line-height:1.4}
+.ktitle.untitled{color:var(--muted);font-style:italic}
+.kfoot{display:flex;align-items:center;gap:8px;margin-top:10px}
+.kfoot .date{margin-left:auto}
+
+/* detail panel */
+#detail{position:sticky;top:16px;min-width:0}
+#detail:empty{display:none}
+.dpanel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px;max-height:calc(100vh - 32px);overflow:auto}
+@media (max-width:1100px){#detail{position:static}.dpanel{max-height:none}}
+.dtop{display:flex;align-items:center;gap:8px;margin:-8px -8px 4px 0}
+.dtop .sp{flex:1}
+.dtitle{font-size:18px;font-weight:600;border-color:transparent;padding:6px 8px;margin-left:-9px;width:calc(100% + 9px);min-height:44px;resize:none;overflow:hidden}
+.dtitle:hover{border-color:var(--line)}.dtitle:focus{border-color:var(--line-strong)}
+.dtitle-ro{font-size:18px;font-weight:600;margin:6px 0}
+.dflags{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 12px}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fld{display:block;min-width:0}
+.fld>span{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.fld.full{grid-column:1/-1}
+.ro{min-height:44px;display:flex;align-items:center;gap:8px;font-size:14px}
+.dblock{margin-top:16px;padding:12px;border-radius:var(--r);border:1px solid var(--line);display:grid;gap:10px}
+.dblock.on{background:var(--red-soft);border-color:transparent}
+.toggle{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;font-weight:500;font-size:14px}
+.hint{font-size:13px;background:var(--t-spike);color:var(--text);padding:10px 12px;border-radius:var(--r-sm);margin:12px 0 0}
+.warn{font-size:13px;color:var(--red);margin:10px 0 0}
+.dmeta{margin-top:16px;font-size:12px;color:var(--muted)}
+.dfoot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.detail-empty{border:1px dashed var(--line-strong);border-radius:var(--r-lg);padding:40px 24px;text-align:center;color:var(--muted)}
+.detail-empty b{color:var(--text);font-size:14px}
+.detail-empty p{margin:4px 0;font-size:13px}
+
+/* lists inside cards */
+ul.rows{list-style:none;margin:0;padding:0}
+ul.rows li{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);min-height:52px}
+ul.rows li:first-child{border-top:0}
+.grow{flex:1;min-width:0}
+.clip{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.linkish{background:none;border:0;padding:0;text-align:left;cursor:pointer;font-size:14px;width:100%}
+.linkish:hover .t{text-decoration:underline}
+
+/* table */
+.tablewrap{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg)}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:middle;font-size:14px}
+tr:last-child td{border-bottom:0}
+th{font-size:12px;font-weight:600;color:var(--muted);background:var(--panel)}
+th button{background:none;border:0;padding:0;min-height:36px;cursor:pointer;font:inherit;color:inherit}
+tbody tr.click{cursor:pointer}
+tbody tr.click:hover{background:var(--bg)}
+tbody tr.sel{background:var(--accent-soft)}
+td.title{white-space:normal;min-width:240px}
+.edit td{padding:6px 8px}
+.edit input,.edit select{min-width:110px}
+
+/* calendar */
+.calwrap{overflow-x:auto}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(108px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;min-width:760px}
+.cdh{background:var(--panel);padding:8px 10px;font-size:12px;font-weight:600;color:var(--muted)}
+.cday{background:var(--panel);min-height:118px;padding:6px}
+.cday.out{background:var(--bg)}
+.cnum{display:flex;justify-content:space-between;align-items:center}
+.cnum .n{font:500 12px var(--mono);color:var(--muted);width:26px;height:26px;display:grid;place-items:center;border-radius:50%}
+.cday.today .n{background:var(--accent);color:var(--accent-ink)}
+.cnum .icon{min-width:32px;min-height:32px;font-size:15px;opacity:0}
+.cday:hover .cnum .icon,.cnum .icon:focus{opacity:1}
+@media (hover:none){.cnum .icon{opacity:1}}
+.ev{display:block;width:100%;text-align:left;border:0;font-size:12px;padding:4px 6px;border-radius:6px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;background:var(--t-task);color:var(--text)}
+.ev.ms{background:var(--t-ms);color:var(--accent);font-weight:600;cursor:default}
+.ev.sp{background:transparent;color:var(--muted);cursor:default;padding-left:2px}
+.ev.done{text-decoration:line-through;color:var(--muted)}
+.ev.sel{box-shadow:inset 0 0 0 1.5px var(--accent)}
+
+/* gantt */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
+.seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:var(--r-sm);overflow:hidden}
+.seg button{min-height:42px;padding:0 14px;border:0;background:var(--panel);cursor:pointer;font-size:14px}
+.seg button[aria-pressed=true]{background:var(--text);color:var(--bg)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px;color:var(--muted);align-items:center}
+.legend i{display:inline-block;width:14px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.gwrap{overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);max-height:72vh}
+.grow-r{display:flex;min-height:40px;border-bottom:1px solid var(--line);width:max-content;min-width:100%}
+.glabel{position:sticky;left:0;z-index:2;flex:none;width:280px;background:var(--panel);border-right:1px solid var(--line);padding:6px 12px;display:flex;align-items:center;gap:8px;font-size:13px;overflow:hidden}
+button.glabel{border:0;border-right:1px solid var(--line);text-align:left;cursor:pointer}
+button.glabel:hover{background:var(--bg)}
+.grow-r.ph,.grow-r.ph .glabel{background:var(--bg)}
+.grow-r.ph .glabel{font-weight:600}
+.gtrack{position:relative;flex:none;background-image:repeating-linear-gradient(to right,var(--line) 0 1px,transparent 1px 100%)}
+.ghead{position:sticky;top:0;z-index:3;background:var(--panel)}
+.ghead .glabel{z-index:4}
+.gm{position:absolute;top:4px;font:600 12px var(--sans);padding-left:6px;border-left:1px solid var(--line-strong);white-space:nowrap;overflow:hidden;height:18px}
+.gw{position:absolute;top:24px;font:400 11px var(--mono);color:var(--muted);padding-left:4px}
+.gb{position:absolute;top:9px;height:22px;border-radius:6px;font-size:11px;font-weight:500;padding:0 8px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;border:1px solid transparent}
+.gb.backlog{background:transparent;border:1.5px dashed var(--line-strong);color:var(--muted)}
+.gb.todo{background:var(--panel);border:1.5px solid var(--muted);color:var(--text)}
+.gb.inprogress{background:var(--text);color:var(--bg)}
+.gb.review{background:var(--muted);color:var(--panel)}
+.gb.done{background:var(--keep);color:var(--keep-ink);border-color:color-mix(in srgb,var(--keep-ink) 30%,transparent)}
+.gb.blocked{box-shadow:0 0 0 2px var(--red)}
+.gb.sel{box-shadow:0 0 0 2px var(--accent)}
+.gb.phase{top:13px;height:14px;cursor:default;opacity:.9;border:0;color:#fff;line-height:14px;font-size:10px}
+.gb.sprint{top:11px;height:18px;cursor:default;background:var(--col);color:var(--muted);border:1px solid var(--line-strong);line-height:16px}
+.gb.sprint.cur{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.gdia{position:absolute;top:13px;width:13px;height:13px;background:var(--accent);transform:rotate(45deg)}
+.gml{position:absolute;top:10px;font-size:11px;white-space:nowrap;color:var(--accent);font-weight:500}
+.todayline{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);z-index:1}
+@media (max-width:600px){.glabel{width:170px}}
+
+/* charts */
+.chart{width:100%;height:auto;display:block}
+.chart .gl{stroke:var(--line)}
+.chart text{fill:var(--muted);font:400 11px var(--mono)}
+.wl{display:grid;grid-template-columns:28px minmax(80px,120px) 1fr 84px;gap:10px;align-items:center;min-height:44px}
+.bar{height:8px;border-radius:99px;background:var(--col);overflow:hidden}
+.bar>span{display:block;height:100%;border-radius:99px}
+
+/* standup */
+.sugrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.suh{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+.sul{font-size:12px;font-weight:600;color:var(--muted);margin:14px 0 4px}
+.sui{display:flex;gap:8px;align-items:center;font-size:13px;min-height:32px}
+.sufld{display:block;margin-top:10px}
+.sufld span{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.sufld textarea{min-height:64px}
+.autosave{font-size:12px;color:var(--muted)}
+
+/* retro */
+.retro{border-radius:var(--r-lg);padding:16px;border:1px solid var(--line)}
+.retro h3{font-size:14px}
+.retro .sub{font-size:12px;color:var(--muted);margin:2px 0 10px}
+.retro ul{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:6px}
+.retro li{background:var(--panel);border-radius:var(--r-sm);padding:6px 4px 6px 12px;display:flex;gap:6px;align-items:center;font-size:14px;border:1px solid var(--line)}
+.retro li .by{font-size:11px;color:var(--muted);white-space:nowrap}
+.addrow{display:flex;gap:6px}
+.r-keep{background:var(--keep)}.r-change{background:var(--t-ms)}.r-try{background:var(--t-task)}
+
+/* settings */
+.fieldrow{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.note{font-size:13px;background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+
+/* dialog + toast */
+dialog.ask{border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;background:var(--panel);color:var(--text);width:min(440px,92vw)}
+dialog.ask::backdrop{background:rgba(20,20,22,.4)}
+dialog.ask h2{font-size:18px;margin-bottom:8px}
+dialog.ask p{margin:0 0 20px;color:var(--muted);font-size:14px}
+dialog.ask .row{display:flex;justify-content:flex-end;gap:8px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,120px);background:var(--text);color:var(--bg);padding:12px 18px;border-radius:var(--r);font-size:14px;transition:transform .2s;z-index:60;max-width:90vw}
+.toast.show{transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="logo" aria-hidden="true">CT</span><span class="pname" id="pname"></span></div>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Views"></nav>
+  <div class="tb-right">
+    <button id="sync" class="sync" type="button"></button>
+    <button class="btn ghost" data-act="settings" id="teamBtn" title="Team, phases, sprints and data">Team</button>
+    <span id="acct"></span>
+    <button class="btn primary" data-act="new-card" id="newBtn">+ New card</button>
+  </div>
+</header>
+<div id="banner"></div>
+<section class="sprinthead" id="sprinthead"></section>
+<div class="filters" id="filters"></div>
+<div class="workspace" id="workspace"><main id="main"></main><aside id="detail" aria-label="Card details"></aside></div>
+<dialog class="ask" id="ask"><form method="dialog"><h2 id="askTitle">Are you sure?</h2><p id="askMsg"></p><div class="row"><button class="btn" value="cancel">Cancel</button><button class="btn danger-solid" value="ok" id="askOk">Delete</button></div></form></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="fileIn" accept=".json,application/json" hidden>
+
+<script id="seed" type="application/json">{"version":2,"updatedAt":"2026-10-07T12:00:00.000Z","project":{"name":"Capstone Project \u2014 Team Tracker","key":"CAP","start":"2026-08-31","end":"2026-12-11","nextNum":30},"members":[{"id":"m1","name":"Hitesh","role":"Project Lead / Analyst","color":"#3F5E7A","capacity":10,"order":1},{"id":"m2","name":"Teammate 2","role":"Data Engineer","color":"#5E7A4F","capacity":10,"order":2},{"id":"m3","name":"Teammate 3","role":"Analyst / Documentation","color":"#8A5A2B","capacity":8,"order":3},{"id":"m4","name":"Teammate 4","role":"Modeling","color":"#6B5B8C","capacity":8,"order":4}],"phases":[{"id":"p1","name":"Discovery & Proposal","start":"2026-08-31","end":"2026-09-18","color":"#7C6F64"},{"id":"p2","name":"Data Collection & Prep","start":"2026-09-14","end":"2026-10-11","color":"#5F7A8A"},{"id":"p3","name":"Modeling & Analysis","start":"2026-10-05","end":"2026-11-13","color":"#6F6A86"},{"id":"p4","name":"Dashboard & Insights","start":"2026-11-02","end":"2026-11-25","color":"#A3876A"},{"id":"p5","name":"Final Report & Presentation","start":"2026-11-23","end":"2026-12-11","color":"#6E8564"}],"milestones":[{"id":"ms1","name":"Proposal approved","date":"2026-09-18","phaseId":"p1"},{"id":"ms2","name":"Data freeze","date":"2026-10-09","phaseId":"p2"},{"id":"ms3","name":"Midterm review","date":"2026-10-23","phaseId":"p3"},{"id":"ms4","name":"Model results final","date":"2026-11-13","phaseId":"p3"},{"id":"ms5","name":"Final presentation","date":"2026-12-09","phaseId":"p5"},{"id":"ms6","name":"Final report submitted","date":"2026-12-11","phaseId":"p5"}],"sprints":[{"id":"s1","name":"Sprint 1","start":"2026-08-31","end":"2026-09-13","goal":"Problem definition and proposal draft","review":"Demoed problem statement + proposal outline to advisor. Feedback: narrow scope to 2 data sources."},{"id":"s2","name":"Sprint 2","start":"2026-09-14","end":"2026-09-27","goal":"Proposal approved, data sources secured","review":"Proposal approved on Sep 18. Data collection scripts working end to end."},{"id":"s3","name":"Sprint 3","start":"2026-09-28","end":"2026-10-11","goal":"Clean dataset and EDA before data freeze"},{"id":"s4","name":"Sprint 4","start":"2026-10-12","end":"2026-10-25","goal":"Baseline model and midterm review"},{"id":"s5","name":"Sprint 5","start":"2026-10-26","end":"2026-11-08","goal":"Advanced models and tuning"},{"id":"s6","name":"Sprint 6","start":"2026-11-09","end":"2026-11-22","goal":"Dashboard and insights"},{"id":"s7","name":"Sprint 7","start":"2026-11-23","end":"2026-12-06","goal":"Final report and presentation"}],"tasks":[{"id":"t1","key":"CAP-1","title":"Define problem statement & objectives","type":"story","status":"done","priority":"High","ownerId":"m1","phaseId":"p1","sprintId":"s1","points":3,"start":"2026-08-31","end":"2026-09-04","completedAt":"2026-09-04","created":"2026-08-31"},{"id":"t2","key":"CAP-2","title":"Literature review (10+ sources)","type":"task","status":"done","priority":"Medium","ownerId":"m3","phaseId":"p1","sprintId":"s1","points":5,"start":"2026-08-31","end":"2026-09-09","completedAt":"2026-09-09","created":"2026-08-31"},{"id":"t3","key":"CAP-3","title":"Kickoff meeting with faculty advisor","type":"task","status":"done","priority":"High","ownerId":"m1","phaseId":"p1","sprintId":"s1","points":1,"start":"2026-09-01","end":"2026-09-02","completedAt":"2026-09-02","created":"2026-09-01"},{"id":"t4","key":"CAP-4","title":"Spike: compare tooling (Python vs R, Tableau vs Power BI)","type":"spike","status":"done","priority":"Medium","ownerId":"m4","phaseId":"p1","sprintId":"s1","points":2,"start":"2026-09-03","end":"2026-09-08","completedAt":"2026-09-08","created":"2026-09-03"},{"id":"t5","key":"CAP-5","title":"Draft project proposal","type":"story","status":"done","priority":"High","ownerId":"m1","phaseId":"p1","sprintId":"s1","points":5,"start":"2026-09-07","end":"2026-09-12","completedAt":"2026-09-12","created":"2026-09-07"},{"id":"t6","key":"CAP-6","title":"Proposal revisions after advisor feedback","type":"task","status":"done","priority":"High","ownerId":"m1","phaseId":"p1","sprintId":"s2","points":2,"start":"2026-09-14","end":"2026-09-17","completedAt":"2026-09-17","created":"2026-09-14"},{"id":"t7","key":"CAP-7","title":"Identify & document data sources","type":"story","status":"done","priority":"High","ownerId":"m2","phaseId":"p2","sprintId":"s2","points":3,"start":"2026-09-14","end":"2026-09-18","completedAt":"2026-09-18","created":"2026-09-14"},{"id":"t8","key":"CAP-8","title":"Spike: API access & rate-limit feasibility","type":"spike","status":"done","priority":"Medium","ownerId":"m4","phaseId":"p2","sprintId":"s2","points":3,"start":"2026-09-15","end":"2026-09-19","completedAt":"2026-09-19","created":"2026-09-15"},{"id":"t9","key":"CAP-9","title":"Set up GitHub repo, branches & environment","type":"task","status":"done","priority":"Medium","ownerId":"m3","phaseId":"p2","sprintId":"s2","points":2,"start":"2026-09-14","end":"2026-09-16","completedAt":"2026-09-15","created":"2026-09-14"},{"id":"t10","key":"CAP-10","title":"Build data collection scripts","type":"story","status":"done","priority":"High","ownerId":"m2","phaseId":"p2","sprintId":"s2","points":8,"start":"2026-09-18","end":"2026-09-26","completedAt":"2026-09-26","created":"2026-09-18"},{"id":"t11","key":"CAP-11","title":"Data cleaning & transformation pipeline","type":"story","status":"inprogress","priority":"High","ownerId":"m2","phaseId":"p2","sprintId":"s3","points":8,"start":"2026-09-28","end":"2026-10-08","created":"2026-09-28"},{"id":"t12","key":"CAP-12","title":"Data dictionary & schema documentation","type":"task","status":"review","priority":"Medium","ownerId":"m3","phaseId":"p2","sprintId":"s3","points":3,"start":"2026-09-28","end":"2026-10-06","created":"2026-09-28"},{"id":"t13","key":"CAP-13","title":"Exploratory data analysis notebook","type":"story","status":"inprogress","priority":"High","ownerId":"m1","phaseId":"p3","sprintId":"s3","points":5,"start":"2026-09-30","end":"2026-10-09","created":"2026-09-30"},{"id":"t14","key":"CAP-14","title":"Fix missing values in source extract","type":"bug","status":"todo","priority":"High","ownerId":"m4","phaseId":"p2","sprintId":"s3","points":2,"start":"2026-10-01","end":"2026-10-05","blocked":true,"blockerNote":"Waiting on advisor to grant access to the full dataset","blockedSince":"2026-10-02","created":"2026-10-01"},{"id":"t15","key":"CAP-15","title":"Feature engineering plan","type":"task","status":"todo","priority":"Medium","ownerId":"m1","phaseId":"p3","sprintId":"s3","points":3,"start":"2026-10-06","end":"2026-10-10","created":"2026-10-06"},{"id":"t16","key":"CAP-16","title":"Data quality report","type":"task","status":"done","priority":"Medium","ownerId":"m3","phaseId":"p2","sprintId":"s3","points":3,"start":"2026-09-28","end":"2026-10-02","completedAt":"2026-10-02","created":"2026-09-28"},{"id":"t17","key":"CAP-17","title":"Spike: evaluate candidate modeling approaches","type":"spike","status":"done","priority":"Medium","ownerId":"m4","phaseId":"p3","sprintId":"s3","points":2,"start":"2026-09-29","end":"2026-10-03","completedAt":"2026-10-03","created":"2026-09-29"},{"id":"t18","key":"CAP-18","title":"Baseline model & benchmarks","type":"story","status":"todo","priority":"High","ownerId":"m4","phaseId":"p3","sprintId":"s4","points":5,"start":"2026-10-12","end":"2026-10-18","created":"2026-10-12"},{"id":"t19","key":"CAP-19","title":"Evaluation metrics framework","type":"task","status":"todo","priority":"High","ownerId":"m1","phaseId":"p3","sprintId":"s4","points":3,"start":"2026-10-12","end":"2026-10-16","created":"2026-10-12"},{"id":"t20","key":"CAP-20","title":"Midterm review slides","type":"task","status":"todo","priority":"Medium","ownerId":"m3","phaseId":"p3","sprintId":"s4","points":3,"start":"2026-10-19","end":"2026-10-22","created":"2026-10-19"},{"id":"t21","key":"CAP-21","title":"Advanced models & hyperparameter tuning","type":"story","status":"backlog","priority":"High","ownerId":"m4","phaseId":"p3","sprintId":"","points":8,"start":"2026-10-26","end":"2026-11-08","created":"2026-10-26"},{"id":"t22","key":"CAP-22","title":"Spike: explainability method (SHAP vs LIME)","type":"spike","status":"backlog","priority":"Medium","ownerId":"m4","phaseId":"p3","sprintId":"","points":2,"start":"2026-10-26","end":"2026-10-28","created":"2026-10-26"},{"id":"t23","key":"CAP-23","title":"Dashboard wireframes","type":"story","status":"backlog","priority":"Medium","ownerId":"m3","phaseId":"p4","sprintId":"","points":3,"start":"2026-11-02","end":"2026-11-06","created":"2026-11-02"},{"id":"t24","key":"CAP-24","title":"Interactive Power BI / Tableau dashboard","type":"story","status":"backlog","priority":"High","ownerId":"m1","phaseId":"p4","sprintId":"","points":8,"start":"2026-11-09","end":"2026-11-22","created":"2026-11-09"},{"id":"t25","key":"CAP-25","title":"Insights & recommendations write-up","type":"task","status":"backlog","priority":"Medium","ownerId":"m1","phaseId":"p4","sprintId":"","points":5,"start":"2026-11-16","end":"2026-11-25","created":"2026-11-16"},{"id":"t26","key":"CAP-26","title":"Final report draft","type":"story","status":"backlog","priority":"High","ownerId":"m3","phaseId":"p5","sprintId":"","points":8,"start":"2026-11-23","end":"2026-12-04","created":"2026-11-23"},{"id":"t27","key":"CAP-27","title":"Final presentation deck & rehearsal","type":"task","status":"backlog","priority":"High","ownerId":"m1","phaseId":"p5","sprintId":"","points":5,"start":"2026-12-01","end":"2026-12-08","created":"2026-12-01"},{"id":"t28","key":"CAP-28","title":"Code cleanup & README documentation","type":"task","status":"backlog","priority":"Low","ownerId":"m2","phaseId":"p5","sprintId":"","points":3,"start":"2026-11-30","end":"2026-12-07","created":"2026-11-30"},{"id":"t29","key":"CAP-29","title":"Investigate duplicate rows after merge","type":"bug","status":"backlog","priority":"Medium","ownerId":"m2","phaseId":"p2","sprintId":"","points":2,"created":"2026-09-01","desc":"Spotted during EDA: merge on customer_id creates ~3% duplicate rows."}],"standups":[{"id":"su_2026-10-05_m1","date":"2026-10-05","memberId":"m1","yesterday":"Finished first pass of EDA distributions","today":"Correlation analysis + start feature plan","blockers":""},{"id":"su_2026-10-05_m2","date":"2026-10-05","memberId":"m2","yesterday":"Built dedupe + type-casting steps","today":"Date normalization in the pipeline","blockers":""},{"id":"su_2026-10-05_m4","date":"2026-10-05","memberId":"m4","yesterday":"Wrapped modeling spike","today":"Missing values fix","blockers":"Need full dataset access from advisor"}],"retro":[{"id":"r1","sprintId":"s2","box":"keep","text":"Short daily standups kept everyone in sync","by":"Hitesh","at":"2026-09-27T15:00:00Z"},{"id":"r2","sprintId":"s2","box":"keep","text":"Pairing on the collection scripts","by":"Teammate 2","at":"2026-09-27T15:01:00Z"},{"id":"r3","sprintId":"s2","box":"change","text":"Cards were moved to Done before review","by":"Teammate 3","at":"2026-09-27T15:02:00Z"},{"id":"r4","sprintId":"s2","box":"try","text":"Time-box every spike to 2 days","by":"Teammate 4","at":"2026-09-27T15:03:00Z"}]}</script>
+<script src="config.js"></script>
+<script type="module">
+const CFG = window.CT_CONFIG || {};
+const LIVE_ON = !!((CFG.firebase && CFG.firebase.apiKey) || window.CT_TEST_DRIVER);
+const SEED = JSON.parse(document.getElementById('seed').textContent);
+const LS_KEY = 'capstone-tracker-data', LS_META = 'capstone-tracker-meta', LS_CACHE = 'capstone-tracker-live-cache';
+const STATUS = {backlog:'Backlog', todo:'To Do', inprogress:'In Progress', review:'Review', done:'Done'};
+const COLS = ['backlog','todo','inprogress','review','done'];
+const TYPES = {story:{l:'Story',bg:'var(--t-story)',fg:'var(--text)',c:'var(--c-story)'}, task:{l:'Task',bg:'var(--t-task)',fg:'var(--muted)',c:'var(--c-task)'},
+  bug:{l:'Bug',bg:'var(--t-bug)',fg:'var(--red)',c:'var(--red)'}, spike:{l:'Spike',bg:'var(--t-spike)',fg:'var(--purple)',c:'var(--purple)'}};
+const PRIO = {High:3, Medium:2, Low:1};
+const VIEWS = [['kanban','Kanban'],['list','List'],['calendar','Calendar'],['gantt','Gantt'],['standup','Standup'],['retro','Review & Retro']];
+const ALLVIEWS = [...VIEWS.map(v => v[0]), 'settings'];
+const BOX = {keep:['Keep','What went well and should continue','r-keep'], change:['Change','What slowed us down or should stop','r-change'], try:['Try','One experiment for next sprint','r-try']};
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2,'0');
+const iso = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const pd = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const addD = (s,n) => { const x = pd(s); x.setDate(x.getDate()+n); return iso(x); };
+const diff = (a,b) => Math.round((pd(b)-pd(a))/864e5);
+const TODAY = iso(new Date());
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = s => s ? pd(s).toLocaleDateString(undefined,{month:'short',day:'numeric'}) : '—';
+const sum = (a,f) => a.reduce((x,y) => x + f(y), 0);
+const pts = t => +t.points || 0;
+const pct = (a,b) => b ? Math.round(a/b*100) : 0;
+const uid = p => p + Date.now().toString(36).slice(-4) + Math.random().toString(36).slice(2,6);
+const clone = o => JSON.parse(JSON.stringify(o));
+const byStart = (a,b) => (a.start||'').localeCompare(b.start||'');
+const lsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } };
+const lsSet = (k,v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} };
+const opts = (list, val, blank) => (blank!==undefined ? `<option value="">${esc(blank)}</option>` : '') + list.map(([v,l]) => `<option value="${esc(v)}" ${v===val?'selected':''}>${esc(l)}</option>`).join('');
+function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2600); }
+function ask(msg, ok='Delete', title='Delete this?'){
+  return new Promise(res => { const d = $('#ask'); $('#askTitle').textContent = title; $('#askMsg').textContent = msg; $('#askOk').textContent = ok; d.returnValue = '';
+    d.onclose = () => res(d.returnValue === 'ok'); d.showModal(); });
+}
+
+/* ---------- state ---------- */
+let S, meta = {dirty:false}, USER = null, forcedRO = false, driver = null;
+const live = {on:LIVE_ON, loaded:false, empty:false, online:false, error:''};
+let view = ALLVIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'kanban';
+let SEL = null, selSprint, F = {owner:'',phase:'',type:'',q:''}, calMonth = null, sortS = {k:'key',d:1}, zoom = 16, suDate = TODAY, pendingRender = false;
+
+function normalize(){
+  ['members','phases','milestones','sprints','tasks','standups','retro'].forEach(k => { if(!Array.isArray(S[k])) S[k] = []; });
+  S.project = Object.assign({name:'Capstone Project', key:'CAP', start:TODAY, end:addD(TODAY,90)}, S.project || {});
+  if(!S.project.nextNum) S.project.nextNum = S.nextNum || (S.tasks.length + 1);
+  delete S.nextNum;
+  S.members.sort((a,b) => (a.order||0)-(b.order||0));
+  if(!selSprint || !sprint(selSprint)) selSprint = curSprint()?.id;
+}
+const member = id => S.members.find(m => m.id === id);
+const phase = id => S.phases.find(p => p.id === id);
+const sprint = id => S.sprints.find(s => s.id === id);
+const sortedSprints = () => [...S.sprints].sort(byStart);
+function curSprint(){ const sp = sortedSprints(); return sp.find(s => s.start <= TODAY && s.end >= TODAY) || sp.filter(s => s.start <= TODAY).pop() || sp[0]; }
+const isOver = t => t.end && t.end < TODAY && t.status !== 'done';
+const isSoon = t => t.end && t.end >= TODAY && t.end <= addD(TODAY,3) && t.status !== 'done';
+const isBlocked = t => t.blocked && t.status !== 'done';
+function ft(list = S.tasks){ const q = F.q.toLowerCase();
+  return list.filter(t => (!F.owner || t.ownerId === F.owner) && (!F.phase || t.phaseId === F.phase) && (!F.type || t.type === F.type) && (!q || ((t.title||'')+' '+t.key+' '+(t.desc||'')).toLowerCase().includes(q))); }
+function canEdit(){
+  if(!live.on) return true;
+  if(!live.loaded || live.empty || forcedRO || !USER) return false;
+  const eds = (CFG.editors || []).map(e => String(e).toLowerCase());
+  return !eds.length || eds.includes((USER.email||'').toLowerCase());
+}
+
+/* ---------- small renderers ---------- */
+function avatar(id){ const m = member(id);
+  if(!m) return '<span class="av none" title="Unassigned" aria-label="Unassigned">?</span>';
+  const ini = m.name.split(/\s+/).map(w => w[0]).join('').slice(0,2).toUpperCase();
+  return `<span class="av" style="background:${esc(m.color)}" title="${esc(m.name)}">${esc(ini)}</span>`; }
+const typePill = t => { const y = TYPES[t.type] || TYPES.task; return `<span class="pill" style="background:${y.bg};color:${y.fg}">${y.l}</span>`; };
+const statusPill = s => `<span class="pill st-${s}">${s==='done'?'✓ ':''}${STATUS[s]||s}</span>`;
+const flags = t => (isBlocked(t) ? '<span class="pill p-blocked">⛔ Blocked</span>' : '') + (isOver(t) ? '<span class="pill p-overdue">Overdue</span>' : isSoon(t) ? '<span class="pill p-soon">Due soon</span>' : '');
+
+/* ---------- data writes (local or live) ---------- */
+function persist(){ S.updatedAt = new Date().toISOString(); if(live.on) lsSet(LS_CACHE,S); else { meta.dirty = true; lsSet(LS_KEY,S); lsSet(LS_META,meta); } }
+const cleanObj = o => Object.fromEntries(Object.entries(o).filter(([,v]) => v !== undefined && v !== null));
+function deny(){ toast(live.on ? 'View only — sign in with an editor account to make changes' : 'Not allowed'); return false; }
+function put(coll, obj){
+  if(!canEdit()) return deny();
+  const a = S[coll], i = a.findIndex(x => x.id === obj.id); if(i < 0) a.push(obj); else a[i] = obj;
+  persist(); driver?.set(`${coll}/${obj.id}`, cleanObj(obj)); return true;
+}
+function patch(coll, id, f, ensure){
+  if(!canEdit()) return deny();
+  if(coll === 'project'){ Object.assign(S.project, f); persist(); driver?.update('project', f); return true; }
+  let o = S[coll].find(x => x.id === id);
+  if(!o){ if(!ensure) return false; o = {id, ...ensure}; S[coll].push(o); f = {id, ...ensure, ...f}; }
+  for(const [k,v] of Object.entries(f)){ if(v === null || v === undefined) delete o[k]; else o[k] = v; }
+  persist(); driver?.update(`${coll}/${id}`, Object.fromEntries(Object.entries(f).map(([k,v]) => [k, v === undefined ? null : v]))); return true;
+}
+function remove(coll, id){
+  if(!canEdit()) return deny();
+  S[coll] = S[coll].filter(x => x.id !== id); persist(); driver?.remove(`${coll}/${id}`); return true;
+}
+const statusPatch = (t, s) => ({status:s, completedAt: s === 'done' ? (t.completedAt || TODAY) : null});
+const vals = o => o ? Object.values(o).filter(Boolean) : [];
+const toMap = a => Object.fromEntries(a.map(x => [x.id, cleanObj(x)]));
+function fromTree(v){ return {project:v.project||{}, members:vals(v.members), phases:vals(v.phases), milestones:vals(v.milestones), sprints:vals(v.sprints), tasks:vals(v.tasks), standups:vals(v.standups), retro:vals(v.retro), updatedAt:v.updatedAt}; }
+const toTree = s => ({project:cleanObj(s.project), members:toMap(s.members), phases:toMap(s.phases), milestones:toMap(s.milestones), sprints:toMap(s.sprints), tasks:toMap(s.tasks), standups:toMap(s.standups), retro:toMap(s.retro), updatedAt:new Date().toISOString()});
+
+/* ---------- live sync (Firebase Realtime Database) ---------- */
+const H = {
+  data(v){ live.loaded = true;
+    if(v && (v.project || v.tasks)){ S = fromTree(v); live.empty = false; normalize(); lsSet(LS_CACHE, S); } else live.empty = true;
+    if(SEL && !S.tasks.find(t => t.id === SEL)) SEL = null;
+    render(); },
+  auth(u){ USER = u; forcedRO = false; render(); },
+  online(b){ live.online = b; renderSync(); },
+  error(e){ const m = String(e && (e.code || e.message) || e);
+    if(/permission/i.test(m)){ forcedRO = true; toast("Change not saved — your account doesn't have edit access"); render(); }
+    else { live.error = m; toast('Sync problem: ' + m); renderSync(); } }
+};
+async function firebaseDriver(h){
+  const B = 'https://www.gstatic.com/firebasejs/10.12.2/';
+  const [A, D, U] = await Promise.all([import(B+'firebase-app.js'), import(B+'firebase-database.js'), import(B+'firebase-auth.js')]);
+  const app = A.initializeApp(CFG.firebase), db = D.getDatabase(app), auth = U.getAuth(app);
+  if(CFG.emulator){ const host = CFG.emulator.host || '127.0.0.1'; D.connectDatabaseEmulator(db, host, CFG.emulator.dbPort || 9000); U.connectAuthEmulator(auth, `http://${host}:${CFG.emulator.authPort || 9099}`, {disableWarnings:true}); }
+  const root = (CFG.dataPath || 'tracker').replace(/^\/+|\/+$/g, '');
+  const R = p => D.ref(db, p ? `${root}/${p}` : root);
+  U.onAuthStateChanged(auth, u => h.auth(u ? {email:u.email || '', name:u.displayName || u.email || 'Teammate'} : null));
+  D.onValue(R(''), s => h.data(s.val()), h.error);
+  D.onValue(D.ref(db, '.info/connected'), s => h.online(!!s.val()));
+  return {
+    set: (p,v) => D.set(R(p), v).catch(h.error),
+    update: (p,v) => D.update(R(p), v).catch(h.error),
+    remove: p => D.remove(R(p)).catch(h.error),
+    nextNum: async () => { const r = await D.runTransaction(R('project/nextNum'), n => (n || 1) + 1); return r.snapshot.val() - 1; },
+    signIn: () => U.signInWithPopup(auth, new U.GoogleAuthProvider()).catch(h.error),
+    signOut: () => U.signOut(auth)
+  };
+}
+async function startLive(){
+  try { driver = window.CT_TEST_DRIVER ? window.CT_TEST_DRIVER(H) : await firebaseDriver(H); }
+  catch(e){ live.error = 'Could not load the live sync library'; console.error(e); render(); }
+}
+
+/* ---------- local mode: file sharing via data.json ---------- */
+function exportData(){
+  const blob = new Blob([JSON.stringify(S, null, 1)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'data.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  if(!live.on){ meta.dirty = false; lsSet(LS_META, meta); }
+  renderSync(); toast(live.on ? 'Backup downloaded' : 'Exported — commit data.json to the repo to share');
+}
+async function loadRepo(){
+  if(meta.dirty && !await ask('Your unshared changes in this browser will be replaced by the version in the repo.', 'Replace', 'Replace local changes?')) return;
+  try { const r = await fetch('data.json', {cache:'no-store'}); if(!r.ok) throw 0; S = await r.json(); normalize(); meta.dirty = false; lsSet(LS_KEY,S); lsSet(LS_META,meta); bannerNote = ''; render(); toast('Loaded the latest data.json'); }
+  catch(e){ toast('No data.json found here — open the GitHub Pages site, or use Import'); }
+}
+let bannerNote = '';
+$('#fileIn').addEventListener('change', e => {
+  const f = e.target.files[0]; if(!f) return; const rd = new FileReader();
+  rd.onload = async () => { let d; try { d = JSON.parse(rd.result); if(!Array.isArray(d.tasks)) throw 0; } catch(err){ toast('That file is not a valid tracker data.json'); return; }
+    if(live.on){ if(!await ask('This replaces everything in the live database for the whole team.', 'Replace', 'Upload to live database?')) return; driver.set('', toTree(d)); toast('Uploaded to the live database'); return; }
+    S = d; normalize(); lsSet(LS_KEY,S); meta.dirty = false; lsSet(LS_META,meta); render(); toast('Imported ' + f.name); };
+  rd.readAsText(f); e.target.value = '';
+});
+
+/* ---------- shell render ---------- */
+const isTextLike = el => el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && ['text','search','number',''].includes(el.type)));
+let dragging = false, pointerDown = false;
+const busy = () => isTextLike(document.activeElement) || dragging || pointerDown;
+function flushPending(){ setTimeout(() => { if(pendingRender && !busy()) render(); }, 0); }
+function render(){
+  if(busy()){ pendingRender = true; renderSync(); return; }
+  pendingRender = false;
+  $('#pname').textContent = S.project.name;
+  $('#tabs').innerHTML = VIEWS.map(([v,l]) => `<button class="tab" role="tab" aria-selected="${v===view}" data-act="tab" data-v="${v}">${l}</button>`).join('');
+  $('#newBtn').hidden = !canEdit();
+  $('#teamBtn').style.fontWeight = view === 'settings' ? '600' : '';
+  renderAcct(); renderSync(); renderBanner(); renderSprintHead(); renderFilters(); renderMain(); fitTitle();
+}
+function renderAcct(){
+  const a = $('#acct');
+  if(!live.on){ a.innerHTML = ''; return; }
+  a.innerHTML = USER ? `<button class="btn ghost" data-act="signout" title="Signed in as ${esc(USER.email)} — click to sign out"><span class="acct">${esc((USER.name||'?').slice(0,1).toUpperCase())}</span><span class="small">Sign out</span></button>`
+    : `<button class="btn" data-act="signin">Sign in</button>`;
+}
+function renderSync(){
+  const b = $('#sync'); let dot = '', lbl = '', act = false;
+  if(live.on){
+    if(live.error && !live.loaded){ dot = 'warn'; lbl = 'Live sync unavailable'; }
+    else if(!live.loaded){ lbl = 'Connecting…'; }
+    else if(!live.online){ dot = 'warn'; lbl = 'Offline — changes sync when reconnected'; }
+    else { dot = 'on'; lbl = 'Live'; }
+  } else if(meta.dirty){ dot = 'warn'; lbl = 'Not shared yet — export'; act = true; }
+  else { lbl = 'Saved in this browser'; }
+  b.className = 'sync' + (act ? ' act' : ''); b.dataset.act = act ? 'goto-data' : '';
+  b.innerHTML = `<span class="dot ${dot}"></span><span class="lbl">${lbl}</span>`; b.title = lbl;
+}
+function renderBanner(){
+  let h = '';
+  if(live.on){
+    if(live.error && !live.loaded) h = `<div class="banner view"><span><b>Live sync couldn't start.</b> ${esc(live.error)}. Showing the last saved copy, view only.</span></div>`;
+    else if(live.loaded && live.empty) h = USER ? `<div class="banner info"><span><b>The live database is empty.</b> Upload the starting data so the team can begin.</span><button class="btn primary" data-act="seed-live">Upload starting data</button></div>`
+      : `<div class="banner view"><span><b>The live database is empty.</b> An editor needs to sign in and upload the starting data.</span><button class="btn" data-act="signin">Sign in</button></div>`;
+    else if(live.loaded && !canEdit()) h = `<div class="banner view" role="status"><span>👁 <b>View only.</b> ${USER ? `You're signed in as ${esc(USER.email)}, which isn't on the editor list. Ask the team lead to add you.` : 'Sign in with an editor account to move cards and make changes.'}</span>${USER ? '' : '<button class="btn" data-act="signin">Sign in</button>'}</div>`;
+  } else if(bannerNote) h = `<div class="banner info"><span>${bannerNote}</span><button class="btn primary" data-act="load-repo">Load latest</button><button class="btn ghost" data-act="dismiss">Dismiss</button></div>`;
+  $('#banner').innerHTML = h;
+}
+function renderSprintHead(){
+  const el = $('#sprinthead');
+  if(view === 'settings'){ el.innerHTML = `<div class="sh-left"><div class="sh-meta">Team & settings</div><h1 class="goal-ro">${esc(S.project.name)}</h1></div>`; return; }
+  const sp = sprint(selSprint);
+  if(!sp){ el.innerHTML = `<div class="sh-left"><div class="sh-meta">No sprint yet</div><h1 class="goal-ro">Add your first sprint in Team settings</h1></div>`; return; }
+  const st = S.tasks.filter(t => t.sprintId === sp.id), c = sum(st,pts), d = sum(st.filter(t => t.status === 'done'), pts);
+  const bl = st.filter(isBlocked).length, ov = st.filter(isOver).length, left = diff(TODAY, sp.end);
+  const when = TODAY < sp.start ? `starts in ${diff(TODAY, sp.start)} days` : left >= 0 ? `${left} day${left===1?'':'s'} left` : 'finished';
+  el.innerHTML = `<div class="sh-left">
+      <div class="sh-meta"><label class="sr" for="spSel" hidden>Sprint</label><select id="spSel" data-chg="sprint" aria-label="Choose sprint">${opts(sortedSprints().map(s => [s.id, s.name + (s.id===curSprint()?.id ? ' · current' : '')]), sp.id)}</select>
+        <span class="mono">${fmt(sp.start)} – ${fmt(sp.end)}</span><span>·</span><span>${when}</span></div>
+      ${canEdit() ? `<textarea class="goal" rows="1" data-bind="sprints|${sp.id}|goal" placeholder="Write this sprint's goal…" aria-label="Sprint goal">${esc(sp.goal||'')}</textarea>` : `<h1 class="goal-ro">${esc(sp.goal || 'No sprint goal yet')}</h1>`}
+    </div>
+    <div class="tiles">
+      <div class="tile"><div class="tl">Committed</div><div class="tv">${c} <small>pts</small></div></div>
+      <div class="tile"><div class="tl">Done</div><div class="tv">${d} <small>pts · ${pct(d,c)}%</small></div></div>
+      <div class="tile ${bl?'alert':''}"><div class="tl">Open blockers</div><div class="tv">${bl}</div></div>
+      <div class="tile ${ov?'alert':''}"><div class="tl">Overdue</div><div class="tv">${ov}</div></div>
+    </div>`;
+}
+function renderFilters(){
+  const f = $('#filters');
+  if(['standup','retro','settings'].includes(view)){ f.hidden = true; f.innerHTML = ''; return; }
+  f.hidden = false;
+  f.innerHTML = `<input id="fq" type="search" placeholder="Search cards…" aria-label="Search cards" value="${esc(F.q)}">
+    <select data-chg="filter" data-f="owner" aria-label="Owner">${opts(S.members.map(m => [m.id,m.name]), F.owner, 'All owners')}</select>
+    <select data-chg="filter" data-f="phase" aria-label="Phase">${opts(S.phases.map(p => [p.id,p.name]), F.phase, 'All phases')}</select>
+    <select data-chg="filter" data-f="type" aria-label="Type">${opts(Object.entries(TYPES).map(([k,v]) => [k,v.l]), F.type, 'All types')}</select>
+    ${F.owner||F.phase||F.type||F.q ? '<button class="btn ghost" data-act="clear-f">Clear filters</button>' : ''}`;
+}
+function renderMain(){
+  const showDetail = view === 'kanban' || (SEL && view !== 'settings');
+  $('#workspace').className = 'workspace' + (showDetail ? ' with-detail' : '');
+  $('#main').innerHTML = ({kanban:vKanban, list:vList, calendar:vCalendar, gantt:vGantt, standup:vStandup, retro:vRetro, settings:vSettings})[view]();
+  $('#detail').innerHTML = showDetail ? vDetail() : '';
+  fitTitle();
+}
+function fitTitle(){ document.querySelectorAll('.dtitle,textarea.goal').forEach(t => { t.style.height = 'auto'; t.style.height = t.scrollHeight + 2 + 'px'; }); }
+
+/* ---------- Kanban ---------- */
+function vKanban(){
+  const T = ft(), ed = canEdit();
+  return `<div class="board" role="list">${COLS.map(s => {
+    const c = T.filter(t => t.status === s && (s === 'backlog' || !selSprint || t.sprintId === selSprint))
+      .sort((a,b) => (PRIO[b.priority]||0)-(PRIO[a.priority]||0) || (a.end||'9').localeCompare(b.end||'9'));
+    return `<section class="col" data-drop="${s}" aria-label="${STATUS[s]} column"><div class="colh"><span class="cn">${STATUS[s]}</span><span class="cc">${c.length}</span><span class="cc">· ${sum(c,pts)} pts</span><span class="sp"></span>
+      ${ed ? `<button class="icon" data-act="new-card" data-status="${s}" aria-label="Add card to ${STATUS[s]}">+</button>` : ''}</div>
+      ${c.map(kcard).join('') || `<div class="empty" style="padding:8px">${s==='backlog' ? 'Backlog is empty' : 'No cards'}</div>`}</section>`; }).join('')}</div>
+    ${ed ? '<p class="xs muted" style="margin-top:8px">Drag cards between columns, or change Status in the details panel.</p>' : ''}`;
+}
+function kcard(t){
+  return `<button class="kcard ${SEL===t.id?'sel':''} ${isBlocked(t)?'is-blocked':''}" ${canEdit()?'draggable="true"':''} data-act="open" data-id="${t.id}" aria-label="${esc(t.key)}: ${esc(t.title||'Untitled card')}, ${STATUS[t.status]}">
+    <div class="krow"><span class="key">${esc(t.key)}</span>${typePill(t)}${t.priority==='High' ? '<span class="xs" style="color:var(--accent);font-weight:600">High</span>' : ''}</div>
+    <div class="ktitle ${t.title?'':'untitled'}">${esc(t.title || 'Untitled card')}</div>
+    ${flags(t) ? `<div class="krow">${flags(t)}</div>` : ''}
+    <div class="kfoot">${avatar(t.ownerId)}<span class="pts">${pts(t)} pts</span><span class="date ${isOver(t)?'over':''}">${t.end ? 'Due '+fmt(t.end) : ''}</span></div></button>`;
+}
+document.addEventListener('dragstart', e => { const c = e.target.closest?.('.kcard'); if(c){ dragging = true; pointerDown = false; e.dataTransfer.setData('text/plain', c.dataset.id); e.dataTransfer.effectAllowed = 'move'; } });
+document.addEventListener('dragover', e => { const c = e.target.closest?.('[data-drop]'); if(c && canEdit()){ e.preventDefault(); document.querySelectorAll('.col.over').forEach(x => x !== c && x.classList.remove('over')); c.classList.add('over'); } });
+document.addEventListener('dragleave', e => { const c = e.target.closest?.('[data-drop]'); if(c && !c.contains(e.relatedTarget)) c.classList.remove('over'); });
+document.addEventListener('dragend', () => { dragging = false; document.querySelectorAll('.col.over').forEach(x => x.classList.remove('over')); flushPending(); });
+document.addEventListener('drop', e => { const c = e.target.closest?.('[data-drop]'); if(!c) return; e.preventDefault(); c.classList.remove('over'); dragging = false;
+  const t = S.tasks.find(x => x.id === e.dataTransfer.getData('text/plain')); if(!t) return; moveTo(t, c.dataset.drop); render(); });
+function moveTo(t, s){
+  const f = statusPatch(t, s);
+  if(s === 'backlog') f.sprintId = ''; else if(!t.sprintId) f.sprintId = selSprint || '';
+  patch('tasks', t.id, f);
+}
+
+/* ---------- Detail panel ---------- */
+function vDetail(){
+  const t = SEL && S.tasks.find(x => x.id === SEL);
+  if(!t) return view === 'kanban' ? `<div class="detail-empty"><p><b>Select a card</b></p><p>Click any card to see everything about it${canEdit() ? ' and edit it right here' : ''}.</p></div>` : '';
+  const ed = canEdit(), b = f => `tasks|${t.id}|${f}`;
+  const sel = (f, list, blank) => `<select data-bind="${b(f)}" aria-label="${f}">${opts(list, t[f] || '', blank)}</select>`;
+  const fld = (label, ctrl, ro, full) => `<label class="fld ${full?'full':''}"><span>${label}</span>${ed ? ctrl : `<div class="ro">${ro}</div>`}</label>`;
+  const m = member(t.ownerId), p = phase(t.phaseId), s = sprint(t.sprintId);
+  return `<div class="dpanel">
+    <div class="dtop"><span class="key">${esc(t.key)}</span>${typePill(t)}${statusPill(t.status)}<span class="sp"></span><button class="icon" data-act="close-detail" aria-label="Close details">✕</button></div>
+    ${ed ? `<textarea class="dtitle" rows="1" data-bind="${b('title')}" placeholder="Untitled card" aria-label="Title">${esc(t.title)}</textarea>` : `<h2 class="dtitle-ro">${esc(t.title || 'Untitled card')}</h2>`}
+    <div class="dflags">${flags(t)}</div>
+    <div class="dgrid">
+      ${fld('Status', sel('status', Object.entries(STATUS)), statusPill(t.status))}
+      ${fld('Owner', sel('ownerId', S.members.map(x => [x.id, x.name]), 'Unassigned'), `${avatar(t.ownerId)} ${esc(m?.name || 'Unassigned')}`)}
+      ${fld('Type', sel('type', Object.entries(TYPES).map(([k,v]) => [k,v.l])), typePill(t))}
+      ${fld('Priority', sel('priority', [['High','High'],['Medium','Medium'],['Low','Low']]), esc(t.priority || '—'))}
+      ${fld('Phase', sel('phaseId', [...S.phases].sort(byStart).map(x => [x.id, x.name]), 'No phase'), esc(p?.name || 'No phase'))}
+      ${fld('Sprint', sel('sprintId', sortedSprints().map(x => [x.id, x.name]), 'Backlog (no sprint)'), esc(s?.name || 'Backlog'))}
+      ${fld('Start date', `<input type="date" data-bind="${b('start')}" value="${t.start||''}">`, `<span class="mono">${fmt(t.start)}</span>`)}
+      ${fld('Due date', `<input type="date" data-bind="${b('end')}" value="${t.end||''}">`, `<span class="mono">${fmt(t.end)}</span>`)}
+      ${fld('Story points', `<input type="number" min="0" step="1" data-kind="num" data-bind="${b('points')}" value="${pts(t)}">`, `<span class="mono">${pts(t)}</span>`)}
+    </div>
+    ${t.type === 'spike' ? '<p class="hint"><b>Spike</b> — a time-boxed research task that answers a question or reduces risk. Keep it to 1–3 points and record the finding below.</p>' : ''}
+    ${t.start && t.end && t.end < t.start ? '<p class="warn">The due date is before the start date.</p>' : ''}
+    <div class="dblock ${isBlocked(t)?'on':''}">
+      ${ed ? `<label class="toggle"><input type="checkbox" data-bind="${b('blocked')}" ${t.blocked?'checked':''}> Blocked</label>` : `<div class="ro"><b>${t.blocked ? '⛔ Blocked' : 'Not blocked'}</b></div>`}
+      ${t.blocked ? (ed ? `<input data-bind="${b('blockerNote')}" value="${esc(t.blockerNote||'')}" placeholder="What's blocking this, and who can unblock it?" aria-label="Blocker details">` : `<div class="small">${esc(t.blockerNote || '')}</div>`)
+        + (t.blockedSince ? `<div class="xs muted">Blocked since <span class="mono">${fmt(t.blockedSince)}</span> · <span class="mono">${Math.max(0,diff(t.blockedSince,TODAY))}</span> days</div>` : '') : ''}
+    </div>
+    <div style="margin-top:16px">${fld('Description & notes', `<textarea rows="5" data-bind="${b('desc')}" placeholder="Context, links, acceptance criteria, findings…">${esc(t.desc||'')}</textarea>`, `<div class="small" style="white-space:pre-wrap">${esc(t.desc || '—')}</div>`, true)}</div>
+    <div class="dmeta">Created <span class="mono">${fmt(t.created)}</span>${t.completedAt ? ` · Completed <span class="mono">${fmt(t.completedAt)}</span>` : ''}</div>
+    ${ed ? `<div class="dfoot"><span class="autosave" id="saveState">Changes save automatically</span><button class="btn danger" data-act="del-task" data-id="${t.id}">Delete card</button></div>` : ''}
+  </div>`;
+}
+
+/* ---------- List ---------- */
+function vList(){
+  const cols = [['key','Key'],['title','Title'],['type','Type'],['status','Status'],['priority','Priority'],['owner','Owner'],['phase','Phase'],['sprint','Sprint'],['points','Pts'],['start','Start'],['end','Due']];
+  const val = (t,k) => ({owner:member(t.ownerId)?.name||'', phase:phase(t.phaseId)?.name||'', sprint:sprint(t.sprintId)?.start||'9', points:pts(t), key:+String(t.key).split('-').pop()||0,
+    priority:PRIO[t.priority]||0, status:COLS.indexOf(t.status)})[k] ?? (t[k]||'');
+  const T = ft().sort((a,b) => { const x = val(a,sortS.k), y = val(b,sortS.k); return (x>y?1:x<y?-1:0)*sortS.d; });
+  return `<div class="toolbar"><span class="small muted"><span class="mono">${T.length}</span> cards · <span class="mono">${sum(T,pts)}</span> points</span></div>
+  <div class="tablewrap"><table><thead><tr>${cols.map(([k,l]) => `<th aria-sort="${sortS.k===k ? (sortS.d>0?'ascending':'descending') : 'none'}"><button data-act="sort" data-k="${k}">${l}${sortS.k===k ? (sortS.d>0?' ↑':' ↓') : ''}</button></th>`).join('')}</tr></thead><tbody>
+  ${T.map(t => `<tr class="click ${SEL===t.id?'sel':''}" data-act="open" data-id="${t.id}" tabindex="0"><td class="key">${esc(t.key)}</td><td class="title">${esc(t.title || 'Untitled card')} ${flags(t)}</td><td>${typePill(t)}</td><td>${statusPill(t.status)}</td><td>${esc(t.priority||'')}</td>
+    <td><span style="display:flex;gap:8px;align-items:center">${avatar(t.ownerId)}${esc(member(t.ownerId)?.name||'Unassigned')}</span></td><td>${esc(phase(t.phaseId)?.name||'—')}</td><td>${esc(sprint(t.sprintId)?.name||'Backlog')}</td>
+    <td class="mono">${pts(t)}</td><td class="date">${fmt(t.start)}</td><td class="date ${isOver(t)?'over':''}">${fmt(t.end)}</td></tr>`).join('') || '<tr><td colspan="11" class="empty">No cards match the filters.</td></tr>'}
+  </tbody></table></div>`;
+}
+
+/* ---------- Calendar ---------- */
+function vCalendar(){
+  if(!calMonth){ const t = pd(TODAY); calMonth = new Date(t.getFullYear(), t.getMonth(), 1); }
+  const y = calMonth.getFullYear(), m = calMonth.getMonth(), start = new Date(y, m, 1 - new Date(y,m,1).getDay()), T = ft(), ed = canEdit();
+  let cells = '';
+  for(let i = 0; i < 42; i++){
+    const d = new Date(start); d.setDate(start.getDate() + i); const s = iso(d); let ev = '';
+    S.milestones.filter(x => x.date === s).forEach(x => ev += `<div class="ev ms" title="Milestone">◆ ${esc(x.name)}</div>`);
+    S.sprints.filter(x => x.start === s).forEach(x => ev += `<div class="ev sp">▶ ${esc(x.name)} starts</div>`);
+    S.sprints.filter(x => x.end === s).forEach(x => ev += `<div class="ev sp">■ ${esc(x.name)} ends</div>`);
+    T.filter(t => t.end === s).forEach(t => ev += `<button class="ev ${t.status==='done'?'done':''} ${SEL===t.id?'sel':''}" style="background:${(TYPES[t.type]||TYPES.task).bg}" data-act="open" data-id="${t.id}" title="${esc(t.title)} — ${STATUS[t.status]}">${t.status==='done'?'✓ ':isBlocked(t)?'⛔ ':''}${esc(t.title || 'Untitled card')}</button>`);
+    cells += `<div class="cday ${d.getMonth()!==m?'out':''} ${s===TODAY?'today':''}"><div class="cnum"><span class="n" ${s===TODAY?'aria-label="Today"':''}>${d.getDate()}</span>${ed ? `<button class="icon" data-act="new-card" data-date="${s}" aria-label="Add card due ${fmt(s)}">+</button>` : ''}</div>${ev}</div>`;
+  }
+  return `<div class="toolbar"><button class="btn" data-act="cal" data-n="-1" aria-label="Previous month">‹</button><b style="min-width:160px;text-align:center;font-size:18px">${calMonth.toLocaleDateString(undefined,{month:'long',year:'numeric'})}</b><button class="btn" data-act="cal" data-n="1" aria-label="Next month">›</button><button class="btn" data-act="cal" data-n="0">Today</button>
+    <span class="legend" style="margin-left:8px"><span>Cards on their due date</span><span><span class="pill p-ms">◆ Milestone</span></span><span>▶ ■ Sprint start / end</span></span></div>
+  <div class="calwrap"><div class="cal">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => `<div class="cdh">${d}</div>`).join('')}${cells}</div></div>`;
+}
+
+/* ---------- Gantt ---------- */
+function vGantt(){
+  const T = ft().filter(t => t.start || t.end);
+  let a = S.project.start, b = S.project.end;
+  [...S.phases, ...S.sprints, ...T.map(t => ({start:t.start||t.end, end:t.end||t.start}))].forEach(p => { if(p.start && p.start < a) a = p.start; if(p.end && p.end > b) b = p.end; });
+  a = addD(a, -((pd(a).getDay()+6)%7)); b = addD(b, 7);
+  const days = diff(a,b) + 1, W = days*zoom, X = s => diff(a,s)*zoom;
+  const today = TODAY >= a && TODAY <= b ? `<div class="todayline" style="left:${X(TODAY)+zoom/2}px" title="Today"></div>` : '';
+  const track = (inner, h) => `<div class="gtrack" style="width:${W}px;background-size:${7*zoom}px 100%;${h?'height:'+h+'px':''}">${inner}${today}</div>`;
+  const bar = (s,e) => `left:${X(s)}px;width:${Math.max(zoom,(diff(s,e)+1)*zoom)}px`;
+  let mh = '', wk = '';
+  for(let i = 0; i < days; i++){ const s = addD(a,i), d = pd(s);
+    if(d.getDate() === 1 || i === 0){ const w = Math.min(diff(s, iso(new Date(d.getFullYear(), d.getMonth()+1, 1))), days-i)*zoom; mh += `<div class="gm" style="left:${i*zoom}px;width:${w}px">${d.toLocaleDateString(undefined,{month:'short',year:'numeric'})}</div>`; }
+    if(d.getDay() === 1 && zoom >= 6) wk += `<div class="gw" style="left:${i*zoom}px">${zoom >= 16 ? fmt(s) : d.getDate()}</div>`; }
+  const cs = curSprint()?.id;
+  let rows = `<div class="grow-r ghead"><div class="glabel"><b>Work item</b></div>${track(mh + wk, 44)}</div>`;
+  rows += `<div class="grow-r"><div class="glabel muted">Sprints</div>${track(sortedSprints().map(s => `<div class="gb sprint ${s.id===cs?'cur':''}" style="${bar(s.start,s.end)}" title="${esc(s.name)}: ${esc(s.goal||'')}">${esc(s.name)}${s.id===cs?' · current':''}</div>`).join(''))}</div>`;
+  rows += `<div class="grow-r"><div class="glabel muted">Milestones</div>${track(S.milestones.map(m => `<div class="gdia" style="left:${X(m.date)+zoom/2-6}px" title="${esc(m.name)} — ${fmt(m.date)}"></div><div class="gml" style="left:${X(m.date)+zoom/2+12}px">${esc(m.name)}</div>`).join(''))}</div>`;
+  [...S.phases].sort(byStart).concat([{id:'', name:'No phase', color:'#8E8C86'}]).forEach(p => {
+    const pt = T.filter(t => p.id ? t.phaseId === p.id : !phase(t.phaseId)).sort((x,y) => (x.start||x.end).localeCompare(y.start||y.end));
+    if(!p.id && !pt.length) return;
+    rows += `<div class="grow-r ph"><div class="glabel"><span style="width:10px;height:10px;border-radius:3px;background:${esc(p.color)};flex:none"></span><span class="clip">${esc(p.name)}</span><span class="xs muted mono" style="margin-left:auto">${pct(sum(pt.filter(t => t.status==='done'),pts), sum(pt,pts))}% done</span></div>
+      ${track(p.start ? `<div class="gb phase" style="${bar(p.start,p.end)};background:${esc(p.color)}" title="${esc(p.name)}: ${fmt(p.start)} – ${fmt(p.end)}"></div>` : '')}</div>`;
+    pt.forEach(t => { const s = t.start || t.end, e = t.end || t.start;
+      rows += `<div class="grow-r"><button class="glabel" data-act="open" data-id="${t.id}">${avatar(t.ownerId)}<span class="key">${esc(t.key)}</span><span class="clip">${esc(t.title || 'Untitled card')}</span></button>
+      ${track(`<button class="gb ${t.status} ${isBlocked(t)?'blocked':''} ${SEL===t.id?'sel':''}" style="${bar(s,e)}" data-act="open" data-id="${t.id}" title="${esc(t.title)} · ${STATUS[t.status]}${isBlocked(t)?' · Blocked':''} · ${fmt(s)}–${fmt(e)}">${t.status==='done'?'✓ ':isBlocked(t)?'⛔ ':''}${STATUS[t.status]}</button>`)}</div>`; });
+  });
+  return `<div class="toolbar"><div class="seg" role="group" aria-label="Zoom">${[['Day',32],['Week',16],['Month',6]].map(([l,z]) => `<button data-act="zoom" data-z="${z}" aria-pressed="${zoom===z}">${l}</button>`).join('')}</div>
+    <span class="legend" style="margin-left:8px">${COLS.map(s => `<span><i class="gb ${s}" style="position:static;display:inline-block;height:10px;width:16px;padding:0"></i>${STATUS[s]}</span>`).join('')}<span><i style="background:var(--accent);width:3px"></i>Today</span><span><i style="background:var(--accent);transform:rotate(45deg);width:9px;height:9px"></i>Milestone</span></span></div>
+  <div class="gwrap" id="gwrap">${rows}</div>`;
+}
+function scrollGanttToday(){ const g = $('#gwrap'), t = g && g.querySelector('.todayline'); if(t) g.scrollLeft = Math.max(0, t.offsetLeft - 420); }
+
+/* ---------- charts ---------- */
+const legend = s => `<div class="legend" style="margin-top:8px">${s.map(x => `<span><i style="background:${x.color}"></i>${esc(x.name)}</span>`).join('')}</div>`;
+function barChart(cats, series, stacked){
+  if(!cats.length) return '<div class="empty">No sprints have started yet.</div>';
+  const W=520, H=210, L=34, R=8, T=12, B=30, iw=W-L-R, ih=H-T-B;
+  const tot = cats.map((_,i) => stacked ? sum(series, s => s.values[i]) : Math.max(0, ...series.map(s => s.values[i])));
+  const step = Math.max(1, Math.ceil(Math.max(4, ...tot)/4)), max = step*4, y = v => T + ih - v/max*ih, band = iw/cats.length, bw = Math.min(56, band*.66);
+  let g = '';
+  for(let i = 0; i <= 4; i++){ const v = step*i; g += `<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" class="gl"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end">${v}</text>`; }
+  cats.forEach((c,i) => { const x0 = L + band*i + (band-bw)/2;
+    if(stacked){ let acc = 0; series.forEach(s => { const v = s.values[i]; if(!v) return; const y1 = y(acc+v), y0 = y(acc);
+      g += `<rect x="${x0}" y="${y1}" width="${bw}" height="${Math.max(0,y0-y1-1.5)}" rx="3" style="fill:${s.color}"><title>${esc(c)} · ${esc(s.name)}: ${v} pts</title></rect>`; acc += v; }); }
+    else { const w = bw/series.length; series.forEach((s,j) => { const v = s.values[i];
+      g += `<rect x="${x0+j*w}" y="${y(v)}" width="${Math.max(1,w-3)}" height="${T+ih-y(v)}" rx="3" style="fill:${s.color}"><title>${esc(c)} · ${esc(s.name)}: ${v} pts</title></rect>`; }); }
+    g += `<text x="${L+band*i+band/2}" y="${H-10}" text-anchor="middle">${esc(c)}</text>`; });
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img">${g}</svg>` + legend(series);
+}
+const started = () => sortedSprints().filter(s => s.start <= TODAY);
+const shortName = s => s.name.replace(/^Sprint\s*/i, 'S');
+function velocityChart(){ const sp = started();
+  return barChart(sp.map(shortName), [{name:'Committed', color:'var(--c-committed)', values:sp.map(s => sum(S.tasks.filter(t => t.sprintId===s.id), pts))},
+    {name:'Completed', color:'var(--accent)', values:sp.map(s => sum(S.tasks.filter(t => t.sprintId===s.id && t.status==='done'), pts))}], false); }
+function compositionChart(){ const sp = started();
+  return barChart(sp.map(shortName), Object.entries(TYPES).map(([k,v]) => ({name:v.l, color:v.c, values:sp.map(s => sum(S.tasks.filter(t => t.sprintId===s.id && t.type===k), pts))})), true); }
+function burndown(cs){
+  if(!cs) return '<div class="empty">No sprint selected.</div>';
+  const st = S.tasks.filter(t => t.sprintId === cs.id), tot = sum(st,pts), n = Math.max(1, diff(cs.start, cs.end));
+  const W=520, H=210, L=34, R=14, Tp=12, B=30, iw=W-L-R, ih=H-Tp-B, step = Math.max(1, Math.ceil(Math.max(4,tot)/4)), max = step*4;
+  const x = i => L + i/n*iw, y = v => Tp + ih - v/max*ih; let g = '';
+  for(let i = 0; i <= 4; i++){ const v = step*i; g += `<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" class="gl"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end">${v}</text>`; }
+  g += `<line x1="${x(0)}" y1="${y(tot)}" x2="${x(n)}" y2="${y(0)}" style="stroke:var(--muted)" stroke-dasharray="5 5" stroke-width="1.5"/>`;
+  const last = Math.min(n, diff(cs.start, TODAY)), p = [];
+  for(let i = 0; i <= last; i++){ const day = addD(cs.start, i); p.push(`${x(i)},${y(tot - sum(st.filter(t => t.status==='done' && (t.completedAt||cs.start) <= day), pts))}`); }
+  if(p.length){ g += `<polyline points="${p.join(' ')}" fill="none" style="stroke:var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>`; const [lx,ly] = p[p.length-1].split(','); g += `<circle cx="${lx}" cy="${ly}" r="4" style="fill:var(--accent)"/>`; }
+  [[0,'start'],[Math.round(n/2),'middle'],[n,'end']].forEach(([i,an]) => g += `<text x="${x(i)}" y="${H-10}" text-anchor="${an}">${fmt(addD(cs.start,i))}</text>`);
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="Burndown: ${tot} points committed">${g}</svg>` + legend([{name:'Remaining points', color:'var(--accent)'},{name:'Ideal pace', color:'var(--muted)'}]);
+}
+function blockerList(bl){
+  if(!bl.length) return '<div class="empty">No open blockers.</div>';
+  return '<ul class="rows">' + bl.map(t => `<li>${avatar(t.ownerId)}<div class="grow"><button class="linkish" data-act="open" data-id="${t.id}"><span class="key">${esc(t.key)}</span> <span class="t">${esc(t.title)}</span></button>
+    <div class="xs" style="color:var(--red)">${esc(t.blockerNote || 'Blocked')}${t.blockedSince ? ` · <span class="mono">${Math.max(0,diff(t.blockedSince,TODAY))}d</span>` : ''}</div></div>${canEdit() ? `<button class="btn" data-act="resolve" data-id="${t.id}">Resolve</button>` : ''}</li>`).join('') + '</ul>';
+}
+
+/* ---------- Standup ---------- */
+function vStandup(){
+  const ed = canEdit(), cs = sprint(selSprint), ms = S.members;
+  const li = t => `<div class="sui">${typePill(t)}<button class="linkish clip grow" data-act="open" data-id="${t.id}"><span class="t">${esc(t.title || 'Untitled card')}</span></button><span class="pts">${pts(t)}</span></div>`;
+  const open = S.tasks.filter(t => t.status !== 'done'), wlMax = Math.max(1, ...ms.map(m => sum(open.filter(t => t.ownerId===m.id), pts)));
+  const due = S.tasks.filter(t => t.status !== 'done' && t.end && t.end >= TODAY && t.end <= addD(TODAY,7)).sort((a,b) => a.end.localeCompare(b.end));
+  const dueMs = S.milestones.filter(m => m.date >= TODAY && m.date <= addD(TODAY,7));
+  return `<div class="stack">
+  <section><div class="toolbar" style="justify-content:space-between"><div><h2 class="sec-t">Daily standup</h2><p class="sec-sub" style="margin:0">What I did · what I'll do next · what's blocking me. ${ed ? 'Notes save automatically.' : ''}</p></div>
+    <label class="small muted" style="display:flex;gap:8px;align-items:center">Date <input type="date" data-chg="sudate" value="${suDate}" style="width:auto"></label></div>
+  <div class="sugrid">${ms.map(m => { const id = `su_${suDate}_${m.id}`, e = S.standups.find(x => x.id === id || (x.date === suDate && x.memberId === m.id)) || {};
+    const bid = e.id || id, ens = esc(JSON.stringify({date:suDate, memberId:m.id}));
+    const recent = S.tasks.filter(t => t.ownerId===m.id && t.status==='done' && t.completedAt && t.completedAt >= addD(suDate,-3) && t.completedAt <= suDate);
+    const wip = S.tasks.filter(t => t.ownerId===m.id && (t.status==='inprogress' || t.status==='review'));
+    const bl = S.tasks.filter(t => t.ownerId===m.id && isBlocked(t));
+    const ta = (f, label, ph) => `<label class="sufld"><span>${label}</span>${ed ? `<textarea data-bind="standups|${bid}|${f}" data-ensure="${ens}" placeholder="${ph}">${esc(e[f]||'')}</textarea>` : `<div class="small">${esc(e[f] || '—')}</div>`}</label>`;
+    return `<section class="card"><div class="suh">${avatar(m.id)}<div><b>${esc(m.name)}</b><div class="xs muted">${esc(m.role||'')}</div></div></div>
+      <div class="sul">Completed · last 3 days</div>${recent.map(li).join('') || '<div class="xs muted">—</div>'}
+      <div class="sul">In progress</div>${wip.map(li).join('') || '<div class="xs muted">—</div>'}
+      ${bl.length ? `<div class="sul" style="color:var(--red)">Blocked</div>${bl.map(t => `<div class="sui" style="color:var(--red)">⛔ ${esc(t.title)}</div>`).join('')}` : ''}
+      ${ta('yesterday','Since last standup','What did you finish?')}${ta('today','Next','What will you work on?')}${ta('blockers','Blockers','Anything in your way?')}</section>`; }).join('') || '<div class="empty">Add team members in Team settings.</div>'}</div></section>
+  <section><h2 class="sec-t">Sprint health</h2><p class="sec-sub">Velocity, composition and burndown across sprints</p>
+  <div class="grid2">
+    <div class="card"><h3 style="font-size:14px">Velocity</h3><p class="xs muted" style="margin:2px 0 12px">Committed vs. completed points per sprint</p>${velocityChart()}</div>
+    <div class="card"><h3 style="font-size:14px">Burndown${cs ? ' — ' + esc(cs.name) : ''}</h3><p class="xs muted" style="margin:2px 0 12px">Remaining points vs. an even pace</p>${burndown(cs)}</div>
+    <div class="card"><h3 style="font-size:14px">Composition</h3><p class="xs muted" style="margin:2px 0 12px">Points by card type per sprint</p>${compositionChart()}</div>
+    <div class="card"><h3 style="font-size:14px">Workload by owner</h3><p class="xs muted" style="margin:2px 0 12px">Open points and card count</p>
+      ${ms.map(m => { const o = open.filter(t => t.ownerId===m.id), p = sum(o,pts); return `<div class="wl">${avatar(m.id)}<span class="clip small">${esc(m.name)}</span><div class="bar"><span style="width:${p/wlMax*100}%;background:${esc(m.color)}"></span></div><span class="xs mono muted">${p} pts · ${o.length}</span></div>`; }).join('')}</div>
+    <div class="card"><h3 style="font-size:14px">Blocker board</h3><p class="xs muted" style="margin:2px 0 8px">Every open blocker across the project</p>${blockerList(S.tasks.filter(isBlocked))}</div>
+    <div class="card"><h3 style="font-size:14px">Due in the next 7 days</h3><p class="xs muted" style="margin:2px 0 8px">Cards and milestones</p>
+      ${due.length || dueMs.length ? '<ul class="rows">' + [...dueMs.map(m => ({d:m.date, h:`<span class="pill p-ms">◆ Milestone</span><b class="grow clip small">${esc(m.name)}</b>`})), ...due.map(t => ({d:t.end, h:`${typePill(t)}<button class="linkish grow clip" data-act="open" data-id="${t.id}"><span class="t">${esc(t.title)}</span></button>${avatar(t.ownerId)}`}))]
+        .sort((a,b) => a.d.localeCompare(b.d)).map(r => `<li><span class="date" style="width:52px">${fmt(r.d)}</span>${r.h}</li>`).join('') + '</ul>' : '<div class="empty">Nothing due this week.</div>'}</div>
+  </div></section></div>`;
+}
+
+/* ---------- Review & Retro ---------- */
+function vRetro(){
+  const sp = sprint(selSprint), ed = canEdit();
+  if(!sp) return '<div class="empty">Add a sprint in Team settings first.</div>';
+  const st = S.tasks.filter(t => t.sprintId === sp.id), done = st.filter(t => t.status === 'done'), rest = st.filter(t => t.status !== 'done');
+  const ss = sortedSprints(), next = ss[ss.findIndex(s => s.id === sp.id) + 1];
+  const row = t => `<li>${statusPill(t.status)}<button class="linkish grow clip" data-act="open" data-id="${t.id}"><span class="t">${esc(t.title || 'Untitled card')}</span></button>${avatar(t.ownerId)}<span class="pts">${pts(t)}</span></li>`;
+  const notes = S.retro.filter(r => r.sprintId === sp.id).sort((a,b) => (a.at||'').localeCompare(b.at||''));
+  let plan = '';
+  if(next){
+    const cap = sum(S.members, m => +m.capacity || 0), nt = S.tasks.filter(t => t.sprintId === next.id), c = sum(nt, pts), over = cap && c > cap;
+    const bl = S.tasks.filter(t => t.status === 'backlog' || (!t.sprintId && t.status !== 'done')).sort((x,y) => (PRIO[y.priority]||0)-(PRIO[x.priority]||0) || (x.start||'9').localeCompare(y.start||'9'));
+    plan = `<section><h2 class="sec-t">Plan ${esc(next.name)}</h2><p class="sec-sub"><span class="mono">${fmt(next.start)} – ${fmt(next.end)}</span> · ${esc(next.goal || 'No goal yet')}</p>
+    <div class="grid2"><div class="card"><div class="toolbar" style="justify-content:space-between;margin-bottom:6px"><b class="small">Committed <span class="mono">${c}</span> of <span class="mono">${cap}</span> pts capacity</b>${over ? '<span class="pill p-blocked">Over capacity</span>' : ''}</div>
+      <div class="bar" style="margin-bottom:12px"><span style="width:${Math.min(100, pct(c, cap || c || 1))}%;background:${over ? 'var(--red)' : 'var(--accent)'}"></span></div>
+      <ul class="rows">${nt.map(t => `<li>${statusPill(t.status)}<button class="linkish grow clip" data-act="open" data-id="${t.id}"><span class="t">${esc(t.title)}</span></button>${avatar(t.ownerId)}<span class="pts">${pts(t)}</span>${ed && t.status !== 'done' ? `<button class="icon" data-act="unplan" data-id="${t.id}" title="Return to backlog" aria-label="Return to backlog">↩</button>` : ''}</li>`).join('') || '<li class="empty">Nothing planned yet.</li>'}</ul></div>
+    <div class="card"><b class="small">Backlog <span class="muted">· by priority</span></b>
+      <ul class="rows" style="margin-top:6px">${bl.map(t => `<li>${typePill(t)}<button class="linkish grow clip" data-act="open" data-id="${t.id}"><span class="t">${esc(t.title)}</span></button><span class="pts">${pts(t)}</span>${ed ? `<button class="btn" data-act="plan" data-id="${t.id}" data-sp="${next.id}">Add</button>` : ''}</li>`).join('') || '<li class="empty">Backlog is empty.</li>'}</ul></div></div></section>`;
+  }
+  return `<div class="stack">
+  <section><h2 class="sec-t">Sprint review — ${esc(sp.name)}</h2><p class="sec-sub">Completed <span class="mono">${sum(done,pts)}</span> of <span class="mono">${sum(st,pts)}</span> committed points · ${done.length} of ${st.length} cards</p>
+    <div class="grid2"><div class="card"><b class="small">Completed</b><ul class="rows" style="margin-top:6px">${done.map(row).join('') || '<li class="empty">Nothing completed yet.</li>'}</ul></div>
+      <div class="card"><div class="toolbar" style="justify-content:space-between;margin:0 0 6px"><b class="small">Not finished</b>${ed && rest.length && next ? `<button class="btn" data-act="carry" data-from="${sp.id}" data-to="${next.id}">Move ${rest.length} to ${esc(next.name)}</button>` : ''}</div><ul class="rows">${rest.map(row).join('') || '<li class="empty">Everything is done.</li>'}</ul></div></div>
+    <div class="card" style="margin-top:16px"><label class="sufld" style="margin:0"><span>Review notes — demo feedback, advisor comments, decisions</span>${ed ? `<textarea rows="4" data-bind="sprints|${sp.id}|review" placeholder="What did we show? What feedback did we get?">${esc(sp.review||'')}</textarea><span class="autosave">Saves automatically</span>` : `<div class="small" style="white-space:pre-wrap">${esc(sp.review || '—')}</div>`}</label></div></section>
+  <section><h2 class="sec-t">Retrospective</h2><p class="sec-sub">How did we work together this sprint?</p>
+    <div class="grid3">${Object.entries(BOX).map(([k,[l,sub,cls]]) => `<div class="retro ${cls}"><h3>${l}</h3><div class="sub">${sub}</div>
+      <ul>${notes.filter(n => n.box === k).map(n => `<li><span class="grow">${esc(n.text)}</span>${n.by ? `<span class="by">${esc(n.by)}</span>` : ''}${ed ? `<button class="icon" data-act="del-retro" data-id="${n.id}" aria-label="Delete note">✕</button>` : ''}</li>`).join('')}</ul>
+      ${ed ? `<div class="addrow"><input data-retro="${k}" placeholder="Add a note…" aria-label="Add ${l} note"><button class="btn" data-act="retro-add" data-box="${k}">Add</button></div>` : ''}</div>`).join('')}</div></section>
+  ${plan}</div>`;
+}
+
+/* ---------- Settings ---------- */
+function vSettings(){
+  const ed = canEdit();
+  const inp = (coll, o, f, type='text', kind='') => ed ? `<input type="${type}" ${kind?`data-kind="${kind}"`:''} value="${esc(o[f] ?? '')}" data-bind="${coll}|${o.id}|${f}" aria-label="${f}">` : `<span class="${type==='date'?'mono':''}">${type==='color' ? `<span class="av" style="background:${esc(o[f])}"></span>` : esc(type==='date' ? fmt(o[f]) : o[f] ?? '')}</span>`;
+  const del = (coll, o, label) => ed ? `<button class="icon" data-act="del-row" data-coll="${coll}" data-id="${o.id}" aria-label="Delete ${esc(label)}">✕</button>` : '';
+  const table = (title, coll, heads, rows, note='') => `<section><h2 class="sec-t">${title}</h2>${note ? `<p class="sec-sub">${note}</p>` : '<div style="height:8px"></div>'}
+    <div class="tablewrap edit"><table><thead><tr>${heads.map(h => `<th>${h}</th>`).join('')}<th></th></tr></thead><tbody>${rows || `<tr><td colspan="${heads.length+1}" class="empty">None yet.</td></tr>`}</tbody></table></div>
+    ${ed ? `<div class="btnrow"><button class="btn" data-act="add-row" data-coll="${coll}">+ Add ${title.toLowerCase().replace(/s$/,'').replace('team member','member')}</button></div>` : ''}</section>`;
+  const pj = (f, label, type='text') => `<label class="fld"><span>${label}</span>${ed ? `<input type="${type}" value="${esc(S.project[f]||'')}" data-bind="project|-|${f}">` : `<div class="ro">${esc(type==='date' ? fmt(S.project[f]) : S.project[f])}</div>`}</label>`;
+  const dataSec = live.on ? `<div class="note">Live sync is on. Changes appear for everyone instantly. ${USER ? `Signed in as <b>${esc(USER.email)}</b> (${canEdit() ? 'editor' : 'viewer'}).` : 'You are not signed in.'}
+      ${(CFG.editors||[]).length ? `<br>Editors: ${CFG.editors.map(esc).join(', ')}` : '<br>Any signed-in account may edit (no editor list set in config.js).'}</div>
+      <div class="btnrow"><button class="btn" data-act="export">Download backup (data.json)</button>${ed ? '<button class="btn" data-act="import">Upload a data.json to live</button>' : ''}</div>`
+    : `<div class="note">Local mode: edits save in this browser. To share, <b>Export data.json</b> and commit it to the GitHub repo; teammates click <b>Load from repo</b>. Turn on live sync in <span class="mono">config.js</span> (see README).</div>
+      <div class="btnrow"><button class="btn primary" data-act="export">Export data.json</button><button class="btn" data-act="import">Import file</button><button class="btn" data-act="load-repo">Load from repo</button><button class="btn danger" data-act="reset">Reset to sample data</button></div>`;
+  return `<div class="stack">
+  <section class="card"><h2 class="sec-t">Project</h2><div class="fieldrow" style="margin-top:12px">${pj('name','Name')}${pj('key','Card key prefix')}${pj('start','Start','date')}${pj('end','End','date')}</div></section>
+  ${table('Team members','members',['Name','Role','Color','Capacity · pts/sprint'], S.members.map(m => `<tr><td>${inp('members',m,'name')}</td><td>${inp('members',m,'role')}</td><td>${inp('members',m,'color','color')}</td><td>${inp('members',m,'capacity','number','num')}</td><td>${del('members',m,m.name)}</td></tr>`).join(''), 'Capacity feeds sprint planning in Review & Retro.')}
+  ${table('Phases','phases',['Name','Start','End','Color'], [...S.phases].sort(byStart).map(p => `<tr><td>${inp('phases',p,'name')}</td><td>${inp('phases',p,'start','date')}</td><td>${inp('phases',p,'end','date')}</td><td>${inp('phases',p,'color','color')}</td><td>${del('phases',p,p.name)}</td></tr>`).join(''))}
+  ${table('Milestones','milestones',['Name','Date','Phase'], [...S.milestones].sort((a,b) => (a.date||'').localeCompare(b.date||'')).map(m => `<tr><td>${inp('milestones',m,'name')}</td><td>${inp('milestones',m,'date','date')}</td><td>${ed ? `<select data-bind="milestones|${m.id}|phaseId" aria-label="Phase">${opts(S.phases.map(p => [p.id,p.name]), m.phaseId || '', '—')}</select>` : esc(phase(m.phaseId)?.name || '—')}</td><td>${del('milestones',m,m.name)}</td></tr>`).join(''))}
+  ${table('Sprints','sprints',['Name','Start','End','Goal'], sortedSprints().map(s => `<tr><td>${inp('sprints',s,'name')}</td><td>${inp('sprints',s,'start','date')}</td><td>${inp('sprints',s,'end','date')}</td><td style="min-width:280px">${inp('sprints',s,'goal')}</td><td>${del('sprints',s,s.name)}</td></tr>`).join(''))}
+  <section id="data-sec"><h2 class="sec-t">Data & sharing</h2><div style="height:8px"></div>${dataSec}</section></div>`;
+}
+
+/* ---------- actions ---------- */
+async function newCard(d = {}){
+  if(!canEdit()) return deny();
+  let num;
+  if(driver){ try { num = await driver.nextNum(); } catch(e){ H.error(e); return; } }
+  else { num = S.project.nextNum || 1; S.project.nextNum = num + 1; }
+  const s = d.status || 'todo';
+  const t = {id:uid('t'), key:`${S.project.key || 'CAP'}-${num}`, title:'', type:'task', status:s, priority:'Medium', ownerId:F.owner || '', phaseId:F.phase || '',
+    sprintId: s === 'backlog' ? '' : (selSprint || ''), points:2, start: d.date ? addD(d.date,-2) : TODAY, end: d.date || addD(TODAY,3), created:TODAY};
+  if(s === 'done') t.completedAt = TODAY;
+  put('tasks', t); SEL = t.id;
+  if(view === 'settings' || view === 'standup' || view === 'retro') setView('kanban'); else render();
+  setTimeout(() => { const el = $('.dtitle'); if(el){ el.focus(); el.scrollIntoView({block:'nearest'}); } }, 30);
+}
+function setView(v){ view = v; if(location.hash.slice(1) !== v) history.replaceState(null, '', '#' + v); render(); window.scrollTo(0,0); if(v === 'gantt') scrollGanttToday(); }
+function openCard(id){ SEL = id; render(); if(window.innerWidth <= 1100) setTimeout(() => $('#detail')?.scrollIntoView({behavior:'smooth', block:'start'}), 30); }
+function newSprintObj(){ const last = sortedSprints().pop(), start = last ? addD(last.end, 1) : TODAY;
+  return {id:uid('s'), name:'Sprint ' + (S.sprints.length + 1), start, end:addD(start, 13), goal:''}; }
+function addRetro(box){
+  const el = document.querySelector(`[data-retro="${box}"]`), text = el?.value.trim(); if(!text) return;
+  put('retro', {id:uid('r'), sprintId:selSprint, box, text, by: USER?.name?.split(' ')[0] || '', at:new Date().toISOString()});
+  el.value = ''; el.blur(); render(); setTimeout(() => document.querySelector(`[data-retro="${box}"]`)?.focus(), 0);
+}
+const ACT = {
+  'tab': d => setView(d.v),
+  'settings': () => setView('settings'),
+  'new-card': d => newCard(d),
+  'open': d => openCard(d.id),
+  'close-detail': () => { SEL = null; render(); },
+  'del-task': async d => { const t = S.tasks.find(x => x.id === d.id); if(!t) return;
+    if(!await ask(`${t.key} “${t.title || 'Untitled card'}” will be removed for everyone. This can't be undone.`, 'Delete card', 'Delete this card?')) return;
+    remove('tasks', t.id); SEL = null; render(); toast(`${t.key} deleted`); },
+  'resolve': d => { patch('tasks', d.id, {blocked:false, blockedSince:null, blockerNote:null}); render(); toast('Blocker resolved'); },
+  'cal': d => { const n = +d.n; if(!n){ const t = pd(TODAY); calMonth = new Date(t.getFullYear(), t.getMonth(), 1); } else calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + n, 1); renderMain(); },
+  'sort': d => { sortS = {k:d.k, d: sortS.k === d.k ? -sortS.d : 1}; renderMain(); },
+  'zoom': d => { zoom = +d.z; renderMain(); scrollGanttToday(); },
+  'clear-f': () => { F = {owner:'',phase:'',type:'',q:''}; render(); },
+  'plan': d => { const t = S.tasks.find(x => x.id === d.id); patch('tasks', t.id, {sprintId:d.sp, status: t.status === 'backlog' ? 'todo' : t.status}); render(); toast(`${t.key} added to ${sprint(d.sp).name}`); },
+  'unplan': d => { patch('tasks', d.id, {sprintId:'', status:'backlog', completedAt:null}); render(); },
+  'carry': d => { const ts = S.tasks.filter(t => t.sprintId === d.from && t.status !== 'done'); ts.forEach(t => patch('tasks', t.id, {sprintId:d.to})); render(); toast(`Moved ${ts.length} cards to ${sprint(d.to).name}`); },
+  'retro-add': d => addRetro(d.box),
+  'del-retro': async d => { const n = S.retro.find(x => x.id === d.id); if(!n) return; if(!await ask(`“${n.text}” will be removed from the retro.`, 'Delete note', 'Delete this note?')) return; remove('retro', n.id); render(); },
+  'add-row': d => { const c = d.coll, o =
+      c === 'members' ? {id:uid('m'), name:'New member', role:'', color:'#5A5A63', capacity:8, order:Date.now()} :
+      c === 'phases' ? {id:uid('p'), name:'New phase', start:TODAY, end:addD(TODAY,14), color:'#8A7F72'} :
+      c === 'milestones' ? {id:uid('ms'), name:'New milestone', date:TODAY, phaseId:''} : newSprintObj();
+    put(c, o); render(); },
+  'del-row': async d => { const o = S[d.coll].find(x => x.id === d.id); if(!o) return;
+    const ref = {members:'ownerId', phases:'phaseId', sprints:'sprintId'}[d.coll], n = ref ? S.tasks.filter(t => t[ref] === d.id).length : 0;
+    if(!await ask(`“${o.name}” will be deleted for everyone.${n ? ` ${n} card${n>1?'s':''} using it will be ${d.coll==='sprints' ? 'moved back to the backlog' : 'left unassigned'}.` : ''}`, 'Delete', 'Delete this?')) return;
+    if(ref) S.tasks.filter(t => t[ref] === d.id).forEach(t => patch('tasks', t.id, d.coll === 'sprints' && t.status !== 'done' ? {sprintId:'', status:'backlog'} : {[ref]:''}));
+    if(d.coll === 'phases') S.milestones.filter(m => m.phaseId === d.id).forEach(m => patch('milestones', m.id, {phaseId:''}));
+    remove(d.coll, d.id); if(d.coll === 'sprints' && selSprint === d.id) selSprint = curSprint()?.id; render(); },
+  'export': exportData,
+  'import': () => $('#fileIn').click(),
+  'load-repo': loadRepo,
+  'goto-data': () => { setView('settings'); setTimeout(() => $('#data-sec')?.scrollIntoView({behavior:'smooth'}), 30); },
+  'dismiss': () => { bannerNote = ''; renderBanner(); },
+  'reset': async () => { if(!await ask('All cards, sprints and notes in this browser will be replaced with the sample project.', 'Reset', 'Reset to sample data?')) return; S = clone(SEED); normalize(); persist(); render(); },
+  'signin': () => driver ? driver.signIn() : toast('Live sync is still loading'),
+  'signout': () => driver?.signOut(),
+  'seed-live': async () => { if(!await ask('This uploads the sample/last-saved data so the whole team starts from it.', 'Upload', 'Start the live database?')) return;
+    const base = lsGet(LS_KEY) || S; driver.set('', toTree(base)); toast('Starting data uploaded'); }
+};
+const CHG = {
+  filter: el => { F[el.dataset.f] = el.value; render(); },
+  sprint: el => { selSprint = el.value; render(); },
+  sudate: el => { suDate = el.value || TODAY; renderMain(); }
+};
+function commitBind(el){
+  const [coll, id, f] = el.dataset.bind.split('|');
+  let v = el.type === 'checkbox' ? el.checked : el.dataset.kind === 'num' ? (+el.value || 0) : el.value;
+  let p = {[f]: v};
+  if(coll === 'tasks'){ const t = S.tasks.find(x => x.id === id); if(!t) return;
+    if(f === 'status'){ p = statusPatch(t, v); if(v === 'backlog') p.sprintId = ''; else if(!t.sprintId) p.sprintId = selSprint || ''; }
+    if(f === 'blocked') p = v ? {blocked:true, blockedSince:TODAY} : {blocked:false, blockedSince:null};
+    if(f === 'sprintId' && v && t.status === 'backlog') p.status = 'todo';
+    if(f === 'sprintId' && !v && t.status !== 'done') p.status = 'backlog'; }
+  const ens = el.dataset.ensure ? JSON.parse(el.dataset.ensure) : undefined;
+  if(patch(coll, id, p, ens)){ const s = $('#saveState'); if(s) s.textContent = 'Saved'; }
+}
+const timers = {};
+document.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if(!el || !el.dataset.act) return; const f = ACT[el.dataset.act]; if(f){ e.preventDefault(); f(el.dataset, el, e); } });
+document.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && e.target.matches('tr[data-act]')) ACT.open(e.target.dataset);
+  if(e.key === 'Enter' && e.target.matches('[data-retro]')){ e.preventDefault(); addRetro(e.target.dataset.retro); }
+  if(e.key === 'Enter' && (e.target.classList.contains('dtitle') || e.target.classList.contains('goal'))){ e.preventDefault(); e.target.blur(); }
+  if(e.key === 'Escape' && SEL && !$('#ask').open && !isTextLike(document.activeElement)){ SEL = null; render(); }
+});
+document.addEventListener('input', e => { const el = e.target;
+  if(el.id === 'fq'){ F.q = el.value; renderMain(); return; }
+  if(el.classList.contains('dtitle') || el.classList.contains('goal')) fitTitle();
+  if(el.dataset.bind && isTextLike(el)){ const k = el.dataset.bind; clearTimeout(timers[k]); const s = $('#saveState'); if(s) s.textContent = 'Saving…'; timers[k] = setTimeout(() => commitBind(el), 450); } });
+document.addEventListener('change', e => { const el = e.target;
+  if(el.dataset.bind){ clearTimeout(timers[el.dataset.bind]); commitBind(el); if(isTextLike(el)) pendingRender = true; else render(); return; }
+  if(el.dataset.chg && CHG[el.dataset.chg]) CHG[el.dataset.chg](el); });
+document.addEventListener('focusout', flushPending);
+document.addEventListener('pointerdown', () => { pointerDown = true; });
+['pointerup','pointercancel'].forEach(t => document.addEventListener(t, () => { pointerDown = false; flushPending(); }));
+window.addEventListener('resize', fitTitle);
+window.addEventListener('hashchange', () => { const v = location.hash.slice(1); if(ALLVIEWS.includes(v) && v !== view) setView(v); });
+
+/* ---------- init ---------- */
+function init(){
+  if(live.on){ S = lsGet(LS_CACHE) || clone(SEED); normalize(); render(); startLive(); return; }
+  const local = lsGet(LS_KEY); meta = lsGet(LS_META) || {dirty:false};
+  S = local || clone(SEED); normalize(); render(); if(view === 'gantt') scrollGanttToday();
+  fetch('data.json', {cache:'no-store'}).then(r => r.ok ? r.json() : null).then(repo => {
+    if(!repo || !Array.isArray(repo.tasks)) return;
+    if(!local){ S = repo; normalize(); meta.dirty = false; lsSet(LS_KEY,S); lsSet(LS_META,meta); render(); }
+    else if((repo.updatedAt||'') > (S.updatedAt||'')){ bannerNote = `<b>A newer data.json is in the repo</b> (saved ${esc(new Date(repo.updatedAt).toLocaleString())}).${meta.dirty ? ' You also have unshared changes here — export them first if you need them.' : ''}`; renderBanner(); }
+  }).catch(() => {});
+}
+init();
+</script>
+</body>
+</html>
